@@ -163,10 +163,10 @@
         else if (!string.IsNullOrEmpty(extractedQuestion) && !isProcessing)
         {
             <!-- ドキュメントが読み込まれたが、まだ結果が表示されていない場合のプレースホルダー -->
-            <div class="custom-card" style="border: 2px dashed var(--gray-300);">
-                <div class="card-body-custom text-center" style="padding: 3rem;">
-                    <i class="bi bi-robot" style="font-size: 3rem; color: var(--gray-300);"></i>
-                    <p class="text-muted mt-3 mb-0">
+            <div class="custom-card placeholder-card">
+                <div class="card-body-custom card-body-placeholder">
+                    <i class="bi bi-robot"></i>
+                    <p class="text-muted">
                         AI生成結果がここに表示されます
                     </p>
                 </div>
@@ -175,10 +175,10 @@
         else
         {
             <!-- 初期状態のプレースホルダー -->
-            <div class="custom-card" style="border: 2px dashed var(--gray-300);">
-                <div class="card-body-custom text-center" style="padding: 3rem;">
-                    <i class="bi bi-arrow-left" style="font-size: 3rem; color: var(--gray-300);"></i>
-                    <p class="text-muted mt-3 mb-0">
+            <div class="custom-card placeholder-card">
+                <div class="card-body-custom card-body-placeholder">
+                    <i class="bi bi-arrow-left"></i>
+                    <p class="text-muted">
                         左側でドキュメントをアップロードしてください
                     </p>
                 </div>
