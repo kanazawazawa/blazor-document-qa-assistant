@@ -55,6 +55,108 @@ body {
     font-size: 2rem;
 }
 
+/* === プログレスインジケーター === */
+.progress-container {
+    background: white;
+    padding: 1.5rem 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    margin-bottom: 1.5rem;
+}
+
+.progress-bar-wrapper {
+    max-width: 600px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 2rem;
+}
+
+.progress-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    position: relative;
+}
+
+.progress-step-circle {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--gray-200);
+    color: var(--gray-500);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 1.125rem;
+    transition: all 0.3s ease;
+    border: 3px solid var(--gray-200);
+}
+
+.progress-step.active .progress-step-circle {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 4px rgba(44, 82, 130, 0.1);
+}
+
+.progress-step.completed .progress-step-circle {
+    background: var(--success-color);
+    color: white;
+    border-color: var(--success-color);
+}
+
+.progress-step-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--gray-600);
+    white-space: nowrap;
+}
+
+.progress-step.active .progress-step-label {
+    color: var(--primary-color);
+}
+
+.progress-step.completed .progress-step-label {
+    color: var(--success-color);
+}
+
+.progress-line {
+    flex: 1;
+    height: 3px;
+    background: var(--gray-200);
+    margin: 0 1rem;
+    position: relative;
+    top: -24px;
+    transition: all 0.3s ease;
+}
+
+.progress-line.active {
+    background: var(--success-color);
+}
+
+@media (max-width: 768px) {
+    .progress-bar-wrapper {
+        padding: 0 1rem;
+    }
+    
+    .progress-step-circle {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+    }
+    
+    .progress-step-label {
+        font-size: 0.75rem;
+    }
+    
+    .progress-line {
+        margin: 0 0.5rem;
+    }
+}
+
 /* === 2x2グリッドレイアウト === */
 .grid-layout {
     display: grid;

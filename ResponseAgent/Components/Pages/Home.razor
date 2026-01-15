@@ -19,6 +19,66 @@
     </div>
 </div>
 
+<!-- プログレスインジケーター -->
+@if (showProgress)
+{
+    <div class="progress-container">
+        <div class="progress-bar-wrapper">
+            <div class="progress-step @GetStepClass(1)">
+                <div class="progress-step-circle">
+                    @if (currentStep > 1)
+                    {
+                        <i class="bi bi-check"></i>
+                    }
+                    else
+                    {
+                        <span>1</span>
+                    }
+                </div>
+                <div class="progress-step-label">ファイル読込</div>
+            </div>
+            <div class="progress-line @(currentStep > 1 ? "active" : "")"></div>
+            
+            <div class="progress-step @GetStepClass(2)">
+                <div class="progress-step-circle">
+                    @if (currentStep > 2)
+                    {
+                        <i class="bi bi-check"></i>
+                    }
+                    else if (currentStep == 2)
+                    {
+                        <span class="spinner-border spinner-border-sm"></span>
+                    }
+                    else
+                    {
+                        <span>2</span>
+                    }
+                </div>
+                <div class="progress-step-label">答弁生成</div>
+            </div>
+            <div class="progress-line @(currentStep > 2 ? "active" : "")"></div>
+            
+            <div class="progress-step @GetStepClass(3)">
+                <div class="progress-step-circle">
+                    @if (currentStep > 3)
+                    {
+                        <i class="bi bi-check"></i>
+                    }
+                    else if (currentStep == 3)
+                    {
+                        <span class="spinner-border spinner-border-sm"></span>
+                    }
+                    else
+                    {
+                        <span>3</span>
+                    }
+                </div>
+                <div class="progress-step-label">レビュー</div>
+            </div>
+        </div>
+    </div>
+}
+
 <!-- グリッドレイアウト: 2x2 -->
 <div class="grid-layout">
     
@@ -136,17 +196,6 @@
                         </div>
                         
                         <div class="d-flex gap-2 mt-4 flex-wrap align-items-center">
-                            <button class="btn btn-warning-custom btn-custom btn-sm" @onclick="ReviewResponse" disabled="@isReviewing">
-                                @if (isReviewing)
-                                {
-                                    <span class="spinner-border spinner-border-sm me-1"></span>
-                                }
-                                else
-                                {
-                                    <i class="bi bi-search"></i>
-                                }
-                                レビュー
-                            </button>
                             <button class="btn btn-secondary-custom btn-custom btn-sm" @onclick="ResetForm">
                                 <i class="bi bi-arrow-clockwise"></i>
                                 リセット
@@ -227,11 +276,20 @@
 private bool isProcessing = false;
 private bool isGenerating = false;
 private bool isReviewing = false;
+private bool showProgress = false;
+private int currentStep = 0;
 private string? errorMessage;
 private string? statusMessage;
 private string? extractedQuestion;
 private string? generatedResponse;
 private string? reviewResult;
+
+    private string GetStepClass(int step)
+    {
+        if (currentStep > step) return "completed";
+        if (currentStep == step) return "active";
+        return "";
+    }
 
     private async Task HandleFileSelected(InputFileChangeEventArgs e)
     {
@@ -239,6 +297,9 @@ private string? reviewResult;
         statusMessage = null;
         extractedQuestion = null;
         generatedResponse = null;
+        reviewResult = null;
+        showProgress = true;
+        currentStep = 1;
 
         var file = e.File;
 
@@ -250,6 +311,7 @@ private string? reviewResult;
         if (file.Size > maxFileSize)
         {
             errorMessage = "ファイルサイズが大きすぎます。10MB以下のファイルを選択してください。";
+            showProgress = false;
             return;
         }
 
@@ -267,19 +329,38 @@ private string? reviewResult;
             {
                 errorMessage = "ファイルからテキストを抽出できませんでした。";
                 statusMessage = null;
+                showProgress = false;
+                currentStep = 0;
                 return;
             }
 
+            // ステップ2: 答弁生成
+            currentStep = 2;
             statusMessage = "AIエージェントが回答を作成しています...";
             await InvokeAsync(StateHasChanged);
 
-            // AIエージェントで回答を生成
             await GenerateResponseAsync();
+
+            // ステップ3: 自動レビュー
+            if (!string.IsNullOrWhiteSpace(generatedResponse) && !generatedResponse.StartsWith("エラー"))
+            {
+                currentStep = 3;
+                statusMessage = "AIがレビューを実行しています...";
+                await InvokeAsync(StateHasChanged);
+
+                await ReviewResponseAutomatic();
+            }
+
+            // 完了
+            currentStep = 4;
+            statusMessage = "すべての処理が完了しました。";
         }
         catch (Exception ex)
         {
             errorMessage = $"エラーが発生しました: {ex.Message}";
             statusMessage = null;
+            showProgress = false;
+            currentStep = 0;
         }
         finally
         {
@@ -335,10 +416,12 @@ private string? reviewResult;
         reviewResult = null;
         errorMessage = null;
         statusMessage = null;
+        showProgress = false;
+        currentStep = 0;
         StateHasChanged();
     }
 
-    private async Task ReviewResponse()
+    private async Task ReviewResponseAutomatic()
     {
         if (string.IsNullOrWhiteSpace(generatedResponse))
             return;
@@ -347,12 +430,9 @@ private string? reviewResult;
         {
             isReviewing = true;
             reviewResult = "レビュー中...";
-            statusMessage = "AIがレビューを実行しています...";
             await InvokeAsync(StateHasChanged);
 
             reviewResult = await AgentService.ReviewResponseAsync(generatedResponse);
-
-            statusMessage = "レビューが完了しました。";
         }
         catch (Exception ex)
         {
