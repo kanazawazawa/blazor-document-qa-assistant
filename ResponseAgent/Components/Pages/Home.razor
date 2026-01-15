@@ -19,13 +19,11 @@
     </div>
 </div>
 
-<!-- 2ペインレイアウト -->
-<div class="two-pane-layout">
+<!-- グリッドレイアウト: 2x2 -->
+<div class="grid-layout">
     
-    <!-- 左ペイン: ドキュメントアップロード・プレビュー -->
-    <div class="left-pane">
-        
-        <!-- ファイルアップロードカード -->
+    <!-- 左上: ファイルアップロード -->
+    <div class="grid-item upload-section">
         <div class="custom-card">
             <div class="card-header-custom">
                 <h5>
@@ -76,8 +74,10 @@
                 }
             </div>
         </div>
+    </div>
 
-        <!-- アップロード済みドキュメントのプレビュー -->
+    <!-- 右上: ドキュメント内容 -->
+    <div class="grid-item document-section">
         @if (!string.IsNullOrEmpty(extractedQuestion))
         {
             <div class="custom-card">
@@ -100,12 +100,10 @@
                 </div>
             </div>
         }
-        
     </div>
 
-    <!-- 右ペイン: 処理結果表示 -->
-    <div class="right-pane">
-        
+    <!-- 左下: AI生成回答 -->
+    <div class="grid-item response-section">
         @if (!string.IsNullOrEmpty(generatedResponse) || isGenerating)
         {
             <div class="custom-card">
@@ -139,7 +137,7 @@
                             @generatedResponse
                         </div>
                         
-                        <div class="d-flex gap-3 mt-4">
+                        <div class="d-flex gap-3 mt-4 flex-wrap">
                             <button class="btn btn-primary-custom btn-custom" @onclick="CopyToClipboard">
                                 <i class="bi bi-clipboard-check"></i>
                                 クリップボードにコピー
@@ -168,11 +166,25 @@
                 </div>
             </div>
         }
-        
-        <!-- レビュー結果表示 -->
+        else if (!string.IsNullOrEmpty(extractedQuestion) && !isProcessing)
+        {
+            <!-- ドキュメントが読み込まれたが、まだ結果が表示されていない場合のプレースホルダー -->
+            <div class="custom-card placeholder-card">
+                <div class="card-body-custom card-body-placeholder">
+                    <i class="bi bi-robot"></i>
+                    <p class="text-muted">
+                        AI生成結果がここに表示されます
+                    </p>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- 右下: レビュー結果 -->
+    <div class="grid-item review-section">
         @if (!string.IsNullOrEmpty(reviewResult) || isReviewing)
         {
-            <div class="custom-card mt-4">
+            <div class="custom-card">
                 <div class="card-header-custom card-header-review">
                     <h5>
                         <i class="bi bi-clipboard-check"></i>
@@ -207,24 +219,6 @@
                 </div>
             </div>
         }
-        
-        else if (!string.IsNullOrEmpty(extractedQuestion) && !isProcessing)
-        {
-            <!-- ドキュメントが読み込まれたが、まだ結果が表示されていない場合のプレースホルダー -->
-            <div class="custom-card placeholder-card">
-                <div class="card-body-custom card-body-placeholder">
-                    <i class="bi bi-robot"></i>
-                    <p class="text-muted">
-                        AI生成結果がここに表示されます
-                    </p>
-                </div>
-            </div>
-        }
-        else
-        {
-            <!-- 初期状態のプレースホルダー（非表示） -->
-        }
-        
     </div>
     
 </div>

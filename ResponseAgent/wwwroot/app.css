@@ -55,30 +55,23 @@ body {
     font-size: 2rem;
 }
 
-/* === 2ペインレイアウト === */
-.two-pane-layout {
+/* === 2x2グリッドレイアウト === */
+.grid-layout {
     display: grid;
     grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
     gap: 1.5rem;
     padding: 1.5rem;
     min-height: calc(100vh - 200px);
 }
 
-.left-pane {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-}
-
-.right-pane {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
+.grid-item {
+    min-height: 300px;
 }
 
 /* レスポンシブ対応 */
 @media (max-width: 1024px) {
-    .two-pane-layout {
+    .grid-layout {
         grid-template-columns: 1fr;
         gap: 1.5rem;
     }
