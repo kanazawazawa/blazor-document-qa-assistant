@@ -1,158 +1,192 @@
-﻿@page "/"
+@page "/"
 @using ResponseAgent.Services
 @inject IFileProcessingService FileProcessingService
 @inject IAgentService AgentService
 @rendermode InteractiveServer
 
-<PageTitle>Document Q&A Assistant</PageTitle>
+<PageTitle>ドキュメントQ&Aアシスタント</PageTitle>
 
 <!-- ヘッダー -->
 <div class="app-header">
     <div class="container">
         <h1>
             <i class="bi bi-file-earmark-text-fill"></i>
-            Document Q&A Assistant
+            ドキュメントQ&Aアシスタント
         </h1>
-        <p class="mb-0 mt-2" style="font-size: 1.1rem; opacity: 0.9;">
-            AI powered document question & answer assistant
+        <p class="mb-0 mt-2" style="font-size: 1rem; opacity: 0.95;">
+            AI を活用した文書質問・応答システム
         </p>
     </div>
 </div>
 
-<div class="container py-4">
+<!-- 2ペインレイアウト -->
+<div class="two-pane-layout">
     
-    <!-- ファイルアップロードカード -->
-    <div class="custom-card mb-4">
-        <div class="card-header-custom">
-            <h5>
-                <i class="bi bi-cloud-upload-fill"></i>
-                Upload Document
-            </h5>
-        </div>
-        <div class="card-body-custom">
-            <div class="upload-area mb-3">
-                <div class="upload-icon">
-                    <i class="bi bi-file-earmark-arrow-up"></i>
-                </div>
-                <h5 class="mb-3">Select your document</h5>
-                <p class="text-muted mb-3">
-                    Supports Word (.docx) and Text (.txt) files
-                </p>
-                <InputFile OnChange="HandleFileSelected" 
-                           class="form-control" 
-                           accept=".docx,.txt" 
-                           disabled="@isProcessing" />
-                <small class="text-muted d-block mt-2">
-                    <i class="bi bi-info-circle"></i> Maximum file size: 10MB
-                </small>
-            </div>
-
-            @if (!string.IsNullOrEmpty(errorMessage))
-            {
-                <div class="alert-custom alert-danger-custom">
-                    <i class="bi bi-exclamation-triangle-fill"></i>
-                    <div>@errorMessage</div>
-                </div>
-            }
-
-            @if (!string.IsNullOrEmpty(statusMessage))
-            {
-                <div class="alert-custom alert-info-custom">
-                    <i class="bi bi-info-circle-fill"></i>
-                    <div>@statusMessage</div>
-                </div>
-            }
-
-            @if (isProcessing)
-            {
-                <div class="loading-overlay">
-                    <div class="spinner-custom"></div>
-                    <span style="color: #667eea; font-weight: 600;">Processing...</span>
-                </div>
-            }
-        </div>
-    </div>
-
-    <!-- 抽出された質問内容 -->
-    @if (!string.IsNullOrEmpty(extractedQuestion))
-    {
-        <div class="custom-card mb-4">
-            <div class="card-header-custom">
-                <h5>
-                    <i class="bi bi-question-circle-fill"></i>
-                    Extracted Question
-                </h5>
-            </div>
-            <div class="card-body-custom">
-                <div class="content-display">
-                    @extractedQuestion
-                </div>
-                <div class="mt-3">
-                    <span class="badge bg-primary" style="padding: 0.5rem 1rem; font-size: 0.9rem;">
-                        <i class="bi bi-file-text"></i>
-                        @(extractedQuestion.Length) characters
-                    </span>
-                </div>
-            </div>
-        </div>
-    }
-
-    <!-- AI生成答弁案 -->
-    @if (!string.IsNullOrEmpty(generatedResponse) || isGenerating)
-    {
+    <!-- 左ペイン: ドキュメントアップロード・プレビュー -->
+    <div class="left-pane">
+        
+        <!-- ファイルアップロードカード -->
         <div class="custom-card">
             <div class="card-header-custom">
                 <h5>
-                    <i class="bi bi-robot"></i>
-                    AI Generated Response
-                    @if (isGenerating)
-                    {
-                        <span class="spinner-border spinner-border-sm ms-2" role="status"></span>
-                    }
-                    else
-                    {
-                        <span class="badge bg-light text-dark ms-2" style="font-size: 0.8rem;">
-                            <i class="bi bi-check-circle-fill text-success"></i> Completed
-                        </span>
-                    }
+                    <i class="bi bi-cloud-upload-fill"></i>
+                    ドキュメントアップロード
                 </h5>
             </div>
             <div class="card-body-custom">
-                @if (isGenerating)
+                <div class="upload-area mb-3">
+                    <div class="upload-icon">
+                        <i class="bi bi-file-earmark-arrow-up"></i>
+                    </div>
+                    <h5 class="mb-3">ファイルを選択</h5>
+                    <p class="text-muted mb-3">
+                        Word (.docx) またはテキスト (.txt) ファイルに対応
+                    </p>
+                    <InputFile OnChange="HandleFileSelected" 
+                               class="form-control" 
+                               accept=".docx,.txt" 
+                               disabled="@isProcessing" />
+                    <small class="text-muted d-block mt-2">
+                        <i class="bi bi-info-circle"></i> 最大ファイルサイズ: 10MB
+                    </small>
+                </div>
+
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="alert-custom alert-danger-custom">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        <div>@errorMessage</div>
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(statusMessage))
+                {
+                    <div class="alert-custom alert-info-custom">
+                        <i class="bi bi-info-circle-fill"></i>
+                        <div>@statusMessage</div>
+                    </div>
+                }
+
+                @if (isProcessing)
                 {
                     <div class="loading-overlay">
                         <div class="spinner-custom"></div>
-                        <span style="color: #667eea; font-weight: 600;">AI is generating response...</span>
-                    </div>
-                }
-                else
-                {
-                    <div class="content-display">
-                        @generatedResponse
-                    </div>
-                    
-                    <div class="d-flex gap-3 mt-4">
-                        <button class="btn btn-primary-custom btn-custom" @onclick="CopyToClipboard">
-                            <i class="bi bi-clipboard-check"></i>
-                            Copy to Clipboard
-                        </button>
-                        <button class="btn btn-secondary-custom btn-custom" @onclick="ResetForm">
-                            <i class="bi bi-arrow-clockwise"></i>
-                            Process New Document
-                        </button>
-                    </div>
-
-                    <div class="mt-3">
-                        <span class="badge bg-success" style="padding: 0.5rem 1rem; font-size: 0.9rem;">
-                            <i class="bi bi-file-text"></i>
-                            @(generatedResponse.Length) characters
-                        </span>
+                        <span style="color: var(--primary-color); font-weight: 600;">処理中...</span>
                     </div>
                 }
             </div>
         </div>
-    }
 
+        <!-- アップロード済みドキュメントのプレビュー -->
+        @if (!string.IsNullOrEmpty(extractedQuestion))
+        {
+            <div class="custom-card">
+                <div class="card-header-custom">
+                    <h5>
+                        <i class="bi bi-file-text-fill"></i>
+                        ドキュメント内容
+                    </h5>
+                </div>
+                <div class="card-body-custom">
+                    <div class="content-display">
+                        @extractedQuestion
+                    </div>
+                    <div class="mt-3">
+                        <span class="badge bg-primary">
+                            <i class="bi bi-file-text"></i>
+                            @(extractedQuestion.Length) 文字
+                        </span>
+                    </div>
+                </div>
+            </div>
+        }
+        
+    </div>
+
+    <!-- 右ペイン: 処理結果表示 -->
+    <div class="right-pane">
+        
+        @if (!string.IsNullOrEmpty(generatedResponse) || isGenerating)
+        {
+            <div class="custom-card">
+                <div class="card-header-custom">
+                    <h5>
+                        <i class="bi bi-robot"></i>
+                        AI生成回答
+                        @if (isGenerating)
+                        {
+                            <span class="spinner-border spinner-border-sm ms-2" role="status"></span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-light text-dark ms-2" style="font-size: 0.75rem;">
+                                <i class="bi bi-check-circle-fill text-success"></i> 完了
+                            </span>
+                        }
+                    </h5>
+                </div>
+                <div class="card-body-custom">
+                    @if (isGenerating)
+                    {
+                        <div class="loading-overlay">
+                            <div class="spinner-custom"></div>
+                            <span style="color: var(--primary-color); font-weight: 600;">AIが回答を生成中...</span>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="content-display">
+                            @generatedResponse
+                        </div>
+                        
+                        <div class="d-flex gap-3 mt-4">
+                            <button class="btn btn-primary-custom btn-custom" @onclick="CopyToClipboard">
+                                <i class="bi bi-clipboard-check"></i>
+                                クリップボードにコピー
+                            </button>
+                            <button class="btn btn-secondary-custom btn-custom" @onclick="ResetForm">
+                                <i class="bi bi-arrow-clockwise"></i>
+                                新しいドキュメントを処理
+                            </button>
+                        </div>
+
+                        <div class="mt-3">
+                            <span class="badge bg-success">
+                                <i class="bi bi-file-text"></i>
+                                @(generatedResponse.Length) 文字
+                            </span>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+        else if (!string.IsNullOrEmpty(extractedQuestion) && !isProcessing)
+        {
+            <!-- ドキュメントが読み込まれたが、まだ結果が表示されていない場合のプレースホルダー -->
+            <div class="custom-card" style="border: 2px dashed var(--gray-300);">
+                <div class="card-body-custom text-center" style="padding: 3rem;">
+                    <i class="bi bi-robot" style="font-size: 3rem; color: var(--gray-300);"></i>
+                    <p class="text-muted mt-3 mb-0">
+                        AI生成結果がここに表示されます
+                    </p>
+                </div>
+            </div>
+        }
+        else
+        {
+            <!-- 初期状態のプレースホルダー -->
+            <div class="custom-card" style="border: 2px dashed var(--gray-300);">
+                <div class="card-body-custom text-center" style="padding: 3rem;">
+                    <i class="bi bi-arrow-left" style="font-size: 3rem; color: var(--gray-300);"></i>
+                    <p class="text-muted mt-3 mb-0">
+                        左側でドキュメントをアップロードしてください
+                    </p>
+                </div>
+            </div>
+        }
+        
+    </div>
+    
 </div>
 
 @code {
@@ -200,10 +234,10 @@
                 return;
             }
 
-            statusMessage = "AIエージェントが答弁案を作成しています...";
+            statusMessage = "AIエージェントが回答を作成しています...";
             await InvokeAsync(StateHasChanged);
 
-            // AIエージェントで答弁案を生成
+            // AIエージェントで回答を生成
             await GenerateResponseAsync();
         }
         catch (Exception ex)
@@ -228,7 +262,7 @@
 
             generatedResponse = await AgentService.GenerateResponseAsync(extractedQuestion!);
 
-            statusMessage = "答弁案の作成が完了しました。";
+            statusMessage = "回答の生成が完了しました。";
         }
         catch (Exception ex)
         {
@@ -243,7 +277,7 @@
 
     private async Task CopyToClipboard()
     {
-        statusMessage = "答弁案をクリップボードにコピーしました（ブラウザの機能を使用してください）。";
+        statusMessage = "回答をクリップボードにコピーしました（ブラウザの機能を使用してください）。";
         await InvokeAsync(StateHasChanged);
     }
 
@@ -256,5 +290,3 @@
         StateHasChanged();
     }
 }
-
-
