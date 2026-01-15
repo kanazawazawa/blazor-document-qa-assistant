@@ -8,7 +8,6 @@
   "AllowedHosts": "*",
   "FoundryAgent": {
     "Endpoint": "YOUR_FOUNDRY_ENDPOINT_HERE",
-    "AgentId": "YOUR_AGENT_ID_HERE",
-    "ModelDeploymentName": "gpt-4o"
+    "AgentId": "YOUR_AGENT_ID_HERE"
   }
 }

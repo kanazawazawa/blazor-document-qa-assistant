@@ -48,8 +48,7 @@ cp appsettings.json.template appsettings.json
 {
   "FoundryAgent": {
     "Endpoint": "https://YOUR-PROJECT.services.ai.azure.com/api/projects/proj-default",
-    "AgentId": "YOUR-AGENT-NAME",
-    "ModelDeploymentName": "gpt-4o"
+    "AgentId": "YOUR-AGENT-NAME"
   }
 }
 ```
