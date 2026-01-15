@@ -20,64 +20,61 @@
 </div>
 
 <!-- プログレスインジケーター -->
-@if (showProgress)
-{
-    <div class="progress-container">
-        <div class="progress-bar-wrapper">
-            <div class="progress-step @GetStepClass(1)">
-                <div class="progress-step-circle">
-                    @if (currentStep > 1)
-                    {
-                        <i class="bi bi-check"></i>
-                    }
-                    else
-                    {
-                        <span>1</span>
-                    }
-                </div>
-                <div class="progress-step-label">ファイル読込</div>
+<div class="progress-container">
+    <div class="progress-bar-wrapper">
+        <div class="progress-step @GetStepClass(1)">
+            <div class="progress-step-circle">
+                @if (currentStep > 1)
+                {
+                    <i class="bi bi-check"></i>
+                }
+                else
+                {
+                    <span>1</span>
+                }
             </div>
-            <div class="progress-line @(currentStep > 1 ? "active" : "")"></div>
-            
-            <div class="progress-step @GetStepClass(2)">
-                <div class="progress-step-circle">
-                    @if (currentStep > 2)
-                    {
-                        <i class="bi bi-check"></i>
-                    }
-                    else if (currentStep == 2)
-                    {
-                        <span class="spinner-border spinner-border-sm"></span>
-                    }
-                    else
-                    {
-                        <span>2</span>
-                    }
-                </div>
-                <div class="progress-step-label">答弁生成</div>
+            <div class="progress-step-label">ファイル読込</div>
+        </div>
+        <div class="progress-line @(currentStep > 1 ? "active" : "")"></div>
+        
+        <div class="progress-step @GetStepClass(2)">
+            <div class="progress-step-circle">
+                @if (currentStep > 2)
+                {
+                    <i class="bi bi-check"></i>
+                }
+                else if (currentStep == 2)
+                {
+                    <span class="spinner-border spinner-border-sm"></span>
+                }
+                else
+                {
+                    <span>2</span>
+                }
             </div>
-            <div class="progress-line @(currentStep > 2 ? "active" : "")"></div>
-            
-            <div class="progress-step @GetStepClass(3)">
-                <div class="progress-step-circle">
-                    @if (currentStep > 3)
-                    {
-                        <i class="bi bi-check"></i>
-                    }
-                    else if (currentStep == 3)
-                    {
-                        <span class="spinner-border spinner-border-sm"></span>
-                    }
-                    else
-                    {
-                        <span>3</span>
-                    }
-                </div>
-                <div class="progress-step-label">レビュー</div>
+            <div class="progress-step-label">答弁生成</div>
+        </div>
+        <div class="progress-line @(currentStep > 2 ? "active" : "")"></div>
+        
+        <div class="progress-step @GetStepClass(3)">
+            <div class="progress-step-circle">
+                @if (currentStep > 3)
+                {
+                    <i class="bi bi-check"></i>
+                }
+                else if (currentStep == 3)
+                {
+                    <span class="spinner-border spinner-border-sm"></span>
+                }
+                else
+                {
+                    <span>3</span>
+                }
             </div>
+            <div class="progress-step-label">レビュー</div>
         </div>
     </div>
-}
+</div>
 
 <!-- グリッドレイアウト: メイン（2x2） + チャットパネル -->
 <div class="main-layout-with-chat">
@@ -362,7 +359,6 @@ private bool isGenerating = false;
 private bool isReviewing = false;
 private bool isChatting = false;
 private bool isChatCollapsed = false;
-private bool showProgress = false;
 private int currentStep = 0;
 private string? errorMessage;
 private string? statusMessage;
@@ -393,7 +389,6 @@ private ElementReference chatMessagesContainer;
         extractedQuestion = null;
         generatedResponse = null;
         reviewResult = null;
-        showProgress = true;
         currentStep = 1;
 
         var file = e.File;
@@ -406,7 +401,7 @@ private ElementReference chatMessagesContainer;
         if (file.Size > maxFileSize)
         {
             errorMessage = "ファイルサイズが大きすぎます。10MB以下のファイルを選択してください。";
-            showProgress = false;
+            currentStep = 0;
             return;
         }
 
@@ -424,7 +419,6 @@ private ElementReference chatMessagesContainer;
             {
                 errorMessage = "ファイルからテキストを抽出できませんでした。";
                 statusMessage = null;
-                showProgress = false;
                 currentStep = 0;
                 return;
             }
@@ -454,7 +448,6 @@ private ElementReference chatMessagesContainer;
         {
             errorMessage = $"エラーが発生しました: {ex.Message}";
             statusMessage = null;
-            showProgress = false;
             currentStep = 0;
         }
         finally
@@ -511,7 +504,6 @@ private ElementReference chatMessagesContainer;
         reviewResult = null;
         errorMessage = null;
         statusMessage = null;
-        showProgress = false;
         currentStep = 0;
         StateHasChanged();
     }
