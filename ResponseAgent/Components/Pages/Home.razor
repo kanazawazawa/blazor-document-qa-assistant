@@ -79,8 +79,12 @@
     </div>
 }
 
-<!-- グリッドレイアウト: 2x2 -->
-<div class="grid-layout">
+<!-- グリッドレイアウト: メイン（2x2） + チャットパネル -->
+<div class="main-layout-with-chat">
+    
+    <!-- メインコンテンツエリア（2x2グリッド） -->
+    <div class="main-content-area">
+        <div class="grid-layout">
     
     <!-- 左上: ファイルアップロード -->
     <div class="grid-item upload-section">
@@ -270,12 +274,90 @@
         }
     </div>
     
+        </div>
+    </div>
+
+    <!-- 右側: Copilot風チャットパネル -->
+    <div class="chat-panel">
+        <div class="chat-header">
+            <h6>
+                <i class="bi bi-chat-dots-fill"></i>
+                AI アシスタント
+            </h6>
+        </div>
+        
+        <div class="chat-messages" @ref="chatMessagesContainer">
+            @if (chatMessages.Count == 0)
+            {
+                <div class="chat-welcome">
+                    <i class="bi bi-lightbulb"></i>
+                    <p>画面上の情報について質問できます</p>
+                    <small class="text-muted">例: 「この答弁案の要点は？」</small>
+                </div>
+            }
+            else
+            {
+                @foreach (var message in chatMessages)
+                {
+                    <div class="chat-message @message.Role">
+                        <div class="chat-message-avatar">
+                            @if (message.Role == "user")
+                            {
+                                <i class="bi bi-person-circle"></i>
+                            }
+                            else
+                            {
+                                <i class="bi bi-robot"></i>
+                            }
+                        </div>
+                        <div class="chat-message-content">
+                            @message.Content
+                        </div>
+                    </div>
+                }
+                
+                @if (isChatting)
+                {
+                    <div class="chat-message assistant">
+                        <div class="chat-message-avatar">
+                            <i class="bi bi-robot"></i>
+                        </div>
+                        <div class="chat-message-content">
+                            <span class="typing-indicator">
+                                <span></span><span></span><span></span>
+                            </span>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+        
+        <div class="chat-input-area">
+            <textarea @bind="chatInput"
+                      @onkeydown="HandleChatKeyDown"
+                      placeholder="質問を入力..."
+                      rows="2"
+                      disabled="@isChatting"></textarea>
+            <button class="btn-send" @onclick="SendChatMessage" disabled="@(isChatting || string.IsNullOrWhiteSpace(chatInput))">
+                @if (isChatting)
+                {
+                    <span class="spinner-border spinner-border-sm"></span>
+                }
+                else
+                {
+                    <i class="bi bi-send-fill"></i>
+                }
+            </button>
+        </div>
+    </div>
+    
 </div>
 
 @code {
 private bool isProcessing = false;
 private bool isGenerating = false;
 private bool isReviewing = false;
+private bool isChatting = false;
 private bool showProgress = false;
 private int currentStep = 0;
 private string? errorMessage;
@@ -283,6 +365,15 @@ private string? statusMessage;
 private string? extractedQuestion;
 private string? generatedResponse;
 private string? reviewResult;
+private string chatInput = "";
+private List<ChatMessage> chatMessages = new();
+private ElementReference chatMessagesContainer;
+
+    public class ChatMessage
+    {
+        public string Role { get; set; } = "";
+        public string Content { get; set; } = "";
+    }
 
     private string GetStepClass(int step)
     {
@@ -442,6 +533,73 @@ private string? reviewResult;
         {
             isReviewing = false;
             await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task SendChatMessage()
+    {
+        if (string.IsNullOrWhiteSpace(chatInput))
+            return;
+
+        var userMessage = chatInput.Trim();
+        chatInput = "";
+
+        // ユーザーメッセージを追加
+        chatMessages.Add(new ChatMessage { Role = "user", Content = userMessage });
+        await InvokeAsync(StateHasChanged);
+
+        try
+        {
+            isChatting = true;
+            await InvokeAsync(StateHasChanged);
+
+            // コンテキストを構築
+            var context = BuildContext();
+
+            // エージェントに送信
+            var response = await AgentService.ChatAsync(userMessage, context);
+
+            // アシスタントメッセージを追加
+            chatMessages.Add(new ChatMessage { Role = "assistant", Content = response });
+        }
+        catch (Exception ex)
+        {
+            chatMessages.Add(new ChatMessage { Role = "assistant", Content = $"エラー: {ex.Message}" });
+        }
+        finally
+        {
+            isChatting = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private string BuildContext()
+    {
+        var contextParts = new List<string>();
+
+        if (!string.IsNullOrWhiteSpace(extractedQuestion))
+        {
+            contextParts.Add($"【ドキュメント内容】\n{extractedQuestion}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(generatedResponse))
+        {
+            contextParts.Add($"【AI生成回答】\n{generatedResponse}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(reviewResult))
+        {
+            contextParts.Add($"【レビュー結果】\n{reviewResult}");
+        }
+
+        return string.Join("\n\n", contextParts);
+    }
+
+    private async Task HandleChatKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !e.ShiftKey)
+        {
+            await SendChatMessage();
         }
     }
 }

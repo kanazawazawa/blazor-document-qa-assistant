@@ -11,6 +11,7 @@ public interface IAgentService
 {
     Task<string> GenerateResponseAsync(string questionText, CancellationToken cancellationToken = default);
     Task<string> ReviewResponseAsync(string responseText, CancellationToken cancellationToken = default);
+    Task<string> ChatAsync(string userMessage, string context, CancellationToken cancellationToken = default);
 }
 
 public class AgentService : IAgentService
@@ -136,6 +137,63 @@ public class AgentService : IAgentService
         {
             _logger.LogError(ex, "レビューエージェント実行中にエラーが発生しました");
             return $"エラー: {ex.Message}\n\n設定を確認してください:\n- エンドポイント: {endpoint}\n- レビューエージェント名: {reviewAgentName}";
+        }
+    }
+
+    public async Task<string> ChatAsync(
+        string userMessage,
+        string context,
+        CancellationToken cancellationToken = default)
+    {
+        var endpoint = _configuration["FoundryAgent:Endpoint"];
+        var chatAgentName = _configuration["FoundryAgent:ChatAgentId"];
+
+        if (string.IsNullOrWhiteSpace(endpoint))
+        {
+            _logger.LogError("Foundry Agent エンドポイントが設定されていません");
+            return "エラー: Foundry Agent エンドポイントが設定されていません。";
+        }
+
+        if (string.IsNullOrWhiteSpace(chatAgentName))
+        {
+            _logger.LogError("Chat Agent 名が設定されていません");
+            return "エラー: Chat Agent 名が設定されていません。appsettings.json の ChatAgentId を確認してください。";
+        }
+
+        try
+        {
+            var credential = new DefaultAzureCredential();
+            var projectClient = new AIProjectClient(new Uri(endpoint), credential);
+
+            var conversationResult = projectClient.OpenAI.Conversations.CreateProjectConversation();
+            var conversation = conversationResult.Value;
+            
+            _logger.LogInformation("チャット用会話を作成しました: {ConversationId}", conversation.Id);
+
+            var responsesClient = projectClient.OpenAI.GetProjectResponsesClientForAgent(
+                defaultAgent: chatAgentName,
+                defaultConversationId: conversation.Id);
+
+            _logger.LogInformation("チャットエージェント '{ChatAgentName}' にメッセージを送信中...", chatAgentName);
+
+            // コンテキストを含めたメッセージを作成
+            var messageWithContext = string.IsNullOrWhiteSpace(context)
+                ? userMessage
+                : $"【画面上の情報】\n{context}\n\n【ユーザーの質問】\n{userMessage}";
+
+            var responseResult = await Task.Run(() => responsesClient.CreateResponse(messageWithContext), cancellationToken);
+            var response = responseResult.Value;
+
+            var chatResponse = response.GetOutputText();
+
+            _logger.LogInformation("チャットエージェントから応答を受信しました");
+
+            return chatResponse;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "チャットエージェント実行中にエラーが発生しました");
+            return $"エラー: {ex.Message}";
         }
     }
 }
