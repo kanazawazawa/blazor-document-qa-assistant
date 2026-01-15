@@ -44,8 +44,9 @@ public class AgentService : IAgentService
 
         try
         {
-            // AIProjectClient を作成
-            var projectClient = new AIProjectClient(new Uri(endpoint), new AzureCliCredential());
+            // AIProjectClient を作成 (App Service ではマネージドIDを使用)
+            var credential = new DefaultAzureCredential();
+            var projectClient = new AIProjectClient(new Uri(endpoint), credential);
 
             // 会話を作成
             var conversationResult = projectClient.OpenAI.Conversations.CreateProjectConversation();
