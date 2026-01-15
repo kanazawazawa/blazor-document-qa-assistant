@@ -1,0 +1,260 @@
+﻿@page "/"
+@using ResponseAgent.Services
+@inject IFileProcessingService FileProcessingService
+@inject IAgentService AgentService
+@rendermode InteractiveServer
+
+<PageTitle>Document Q&A Assistant</PageTitle>
+
+<!-- ヘッダー -->
+<div class="app-header">
+    <div class="container">
+        <h1>
+            <i class="bi bi-file-earmark-text-fill"></i>
+            Document Q&A Assistant
+        </h1>
+        <p class="mb-0 mt-2" style="font-size: 1.1rem; opacity: 0.9;">
+            AI powered document question & answer assistant
+        </p>
+    </div>
+</div>
+
+<div class="container py-4">
+    
+    <!-- ファイルアップロードカード -->
+    <div class="custom-card mb-4">
+        <div class="card-header-custom">
+            <h5>
+                <i class="bi bi-cloud-upload-fill"></i>
+                Upload Document
+            </h5>
+        </div>
+        <div class="card-body-custom">
+            <div class="upload-area mb-3">
+                <div class="upload-icon">
+                    <i class="bi bi-file-earmark-arrow-up"></i>
+                </div>
+                <h5 class="mb-3">Select your document</h5>
+                <p class="text-muted mb-3">
+                    Supports Word (.docx) and Text (.txt) files
+                </p>
+                <InputFile OnChange="HandleFileSelected" 
+                           class="form-control" 
+                           accept=".docx,.txt" 
+                           disabled="@isProcessing" />
+                <small class="text-muted d-block mt-2">
+                    <i class="bi bi-info-circle"></i> Maximum file size: 10MB
+                </small>
+            </div>
+
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert-custom alert-danger-custom">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    <div>@errorMessage</div>
+                </div>
+            }
+
+            @if (!string.IsNullOrEmpty(statusMessage))
+            {
+                <div class="alert-custom alert-info-custom">
+                    <i class="bi bi-info-circle-fill"></i>
+                    <div>@statusMessage</div>
+                </div>
+            }
+
+            @if (isProcessing)
+            {
+                <div class="loading-overlay">
+                    <div class="spinner-custom"></div>
+                    <span style="color: #667eea; font-weight: 600;">Processing...</span>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- 抽出された質問内容 -->
+    @if (!string.IsNullOrEmpty(extractedQuestion))
+    {
+        <div class="custom-card mb-4">
+            <div class="card-header-custom">
+                <h5>
+                    <i class="bi bi-question-circle-fill"></i>
+                    Extracted Question
+                </h5>
+            </div>
+            <div class="card-body-custom">
+                <div class="content-display">
+                    @extractedQuestion
+                </div>
+                <div class="mt-3">
+                    <span class="badge bg-primary" style="padding: 0.5rem 1rem; font-size: 0.9rem;">
+                        <i class="bi bi-file-text"></i>
+                        @(extractedQuestion.Length) characters
+                    </span>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- AI生成答弁案 -->
+    @if (!string.IsNullOrEmpty(generatedResponse) || isGenerating)
+    {
+        <div class="custom-card">
+            <div class="card-header-custom">
+                <h5>
+                    <i class="bi bi-robot"></i>
+                    AI Generated Response
+                    @if (isGenerating)
+                    {
+                        <span class="spinner-border spinner-border-sm ms-2" role="status"></span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-light text-dark ms-2" style="font-size: 0.8rem;">
+                            <i class="bi bi-check-circle-fill text-success"></i> Completed
+                        </span>
+                    }
+                </h5>
+            </div>
+            <div class="card-body-custom">
+                @if (isGenerating)
+                {
+                    <div class="loading-overlay">
+                        <div class="spinner-custom"></div>
+                        <span style="color: #667eea; font-weight: 600;">AI is generating response...</span>
+                    </div>
+                }
+                else
+                {
+                    <div class="content-display">
+                        @generatedResponse
+                    </div>
+                    
+                    <div class="d-flex gap-3 mt-4">
+                        <button class="btn btn-primary-custom btn-custom" @onclick="CopyToClipboard">
+                            <i class="bi bi-clipboard-check"></i>
+                            Copy to Clipboard
+                        </button>
+                        <button class="btn btn-secondary-custom btn-custom" @onclick="ResetForm">
+                            <i class="bi bi-arrow-clockwise"></i>
+                            Process New Document
+                        </button>
+                    </div>
+
+                    <div class="mt-3">
+                        <span class="badge bg-success" style="padding: 0.5rem 1rem; font-size: 0.9rem;">
+                            <i class="bi bi-file-text"></i>
+                            @(generatedResponse.Length) characters
+                        </span>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+</div>
+
+@code {
+    private bool isProcessing = false;
+    private bool isGenerating = false;
+    private string? errorMessage;
+    private string? statusMessage;
+    private string? extractedQuestion;
+    private string? generatedResponse;
+
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        errorMessage = null;
+        statusMessage = null;
+        extractedQuestion = null;
+        generatedResponse = null;
+
+        var file = e.File;
+
+        if (file == null)
+            return;
+
+        // ファイルサイズチェック (10MB制限)
+        const long maxFileSize = 10 * 1024 * 1024;
+        if (file.Size > maxFileSize)
+        {
+            errorMessage = "ファイルサイズが大きすぎます。10MB以下のファイルを選択してください。";
+            return;
+        }
+
+        try
+        {
+            isProcessing = true;
+            statusMessage = "ファイルを読み込んでいます...";
+            await InvokeAsync(StateHasChanged);
+
+            // ファイルからテキストを抽出
+            using var stream = file.OpenReadStream(maxFileSize);
+            extractedQuestion = await FileProcessingService.ExtractTextFromFileAsync(stream, file.Name);
+
+            if (string.IsNullOrWhiteSpace(extractedQuestion))
+            {
+                errorMessage = "ファイルからテキストを抽出できませんでした。";
+                statusMessage = null;
+                return;
+            }
+
+            statusMessage = "AIエージェントが答弁案を作成しています...";
+            await InvokeAsync(StateHasChanged);
+
+            // AIエージェントで答弁案を生成
+            await GenerateResponseAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"エラーが発生しました: {ex.Message}";
+            statusMessage = null;
+        }
+        finally
+        {
+            isProcessing = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task GenerateResponseAsync()
+    {
+        try
+        {
+            isGenerating = true;
+            generatedResponse = "生成中...";
+            await InvokeAsync(StateHasChanged);
+
+            generatedResponse = await AgentService.GenerateResponseAsync(extractedQuestion!);
+
+            statusMessage = "答弁案の作成が完了しました。";
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"AI生成中にエラーが発生しました: {ex.Message}";
+        }
+        finally
+        {
+            isGenerating = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task CopyToClipboard()
+    {
+        statusMessage = "答弁案をクリップボードにコピーしました（ブラウザの機能を使用してください）。";
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void ResetForm()
+    {
+        extractedQuestion = null;
+        generatedResponse = null;
+        errorMessage = null;
+        statusMessage = null;
+        StateHasChanged();
+    }
+}
+
+
