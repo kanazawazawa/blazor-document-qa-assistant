@@ -6,75 +6,80 @@
 
 <PageTitle>ドキュメントQ&Aアシスタント</PageTitle>
 
-<!-- ヘッダー -->
-<div class="app-header">
-    <div class="container">
-        <h1>
-            <i class="bi bi-file-earmark-text-fill"></i>
-            ドキュメントQ&Aアシスタント
-        </h1>
-        <p class="mb-0 mt-2" style="font-size: 1rem; opacity: 0.95;">
-            AI を活用した文書質問・応答システム
-        </p>
+<!-- ヘッダー（固定） -->
+<div class="app-header-fixed">
+    <div class="container-fluid">
+        <div class="header-content">
+            <div class="header-title">
+                <h1>
+                    <i class="bi bi-file-earmark-text-fill"></i>
+                    ドキュメントQ&Aアシスタント
+                </h1>
+                <p class="mb-0 mt-1" style="font-size: 0.9rem; opacity: 0.95;">
+                    AI を活用した文書質問・応答システム
+                </p>
+            </div>
+            
+            <!-- プログレスインジケーター（ヘッダー内） -->
+            <div class="progress-inline">
+                <div class="progress-step-inline @GetStepClass(1)">
+                    <div class="progress-step-circle-inline">
+                        @if (currentStep > 1)
+                        {
+                            <i class="bi bi-check"></i>
+                        }
+                        else
+                        {
+                            <span>1</span>
+                        }
+                    </div>
+                    <span class="progress-step-label-inline">ファイル読込</span>
+                </div>
+                <div class="progress-line-inline @(currentStep > 1 ? "active" : "")"></div>
+                
+                <div class="progress-step-inline @GetStepClass(2)">
+                    <div class="progress-step-circle-inline">
+                        @if (currentStep > 2)
+                        {
+                            <i class="bi bi-check"></i>
+                        }
+                        else if (currentStep == 2)
+                        {
+                            <span class="spinner-border spinner-border-sm"></span>
+                        }
+                        else
+                        {
+                            <span>2</span>
+                        }
+                    </div>
+                    <span class="progress-step-label-inline">答弁生成</span>
+                </div>
+                <div class="progress-line-inline @(currentStep > 2 ? "active" : "")"></div>
+                
+                <div class="progress-step-inline @GetStepClass(3)">
+                    <div class="progress-step-circle-inline">
+                        @if (currentStep > 3)
+                        {
+                            <i class="bi bi-check"></i>
+                        }
+                        else if (currentStep == 3)
+                        {
+                            <span class="spinner-border spinner-border-sm"></span>
+                        }
+                        else
+                        {
+                            <span>3</span>
+                        }
+                    </div>
+                    <span class="progress-step-label-inline">レビュー</span>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
-<!-- プログレスインジケーター -->
-<div class="progress-container">
-    <div class="progress-bar-wrapper">
-        <div class="progress-step @GetStepClass(1)">
-            <div class="progress-step-circle">
-                @if (currentStep > 1)
-                {
-                    <i class="bi bi-check"></i>
-                }
-                else
-                {
-                    <span>1</span>
-                }
-            </div>
-            <div class="progress-step-label">ファイル読込</div>
-        </div>
-        <div class="progress-line @(currentStep > 1 ? "active" : "")"></div>
-        
-        <div class="progress-step @GetStepClass(2)">
-            <div class="progress-step-circle">
-                @if (currentStep > 2)
-                {
-                    <i class="bi bi-check"></i>
-                }
-                else if (currentStep == 2)
-                {
-                    <span class="spinner-border spinner-border-sm"></span>
-                }
-                else
-                {
-                    <span>2</span>
-                }
-            </div>
-            <div class="progress-step-label">答弁生成</div>
-        </div>
-        <div class="progress-line @(currentStep > 2 ? "active" : "")"></div>
-        
-        <div class="progress-step @GetStepClass(3)">
-            <div class="progress-step-circle">
-                @if (currentStep > 3)
-                {
-                    <i class="bi bi-check"></i>
-                }
-                else if (currentStep == 3)
-                {
-                    <span class="spinner-border spinner-border-sm"></span>
-                }
-                else
-                {
-                    <span>3</span>
-                }
-            </div>
-            <div class="progress-step-label">レビュー</div>
-        </div>
-    </div>
-</div>
+<!-- ヘッダー分のスペーサー -->
+<div class="header-spacer"></div>
 
 <!-- グリッドレイアウト: メイン（2x2） + チャットパネル -->
 <div class="main-layout-with-chat">

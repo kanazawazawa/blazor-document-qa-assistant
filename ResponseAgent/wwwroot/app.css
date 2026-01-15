@@ -33,17 +33,32 @@ body {
     min-height: 100vh;
 }
 
-/* === ヘッダースタイル === */
-.app-header {
+/* === ヘッダースタイル（固定） === */
+.app-header-fixed {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
     background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-color) 100%);
     color: white;
-    padding: 1.5rem 0;
+    padding: 1rem 0;
     box-shadow: var(--shadow-md);
-    margin-bottom: 0;
+    z-index: 1000;
 }
 
-.app-header h1 {
-    font-size: 1.75rem;
+.header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+}
+
+.header-title {
+    flex: 0 0 auto;
+}
+
+.header-title h1 {
+    font-size: 1.5rem;
     font-weight: 600;
     margin: 0;
     display: flex;
@@ -51,109 +66,115 @@ body {
     gap: 0.75rem;
 }
 
-.app-header h1 i {
-    font-size: 2rem;
+.header-title h1 i {
+    font-size: 1.75rem;
 }
 
-/* === プログレスインジケーター === */
-.progress-container {
-    background: white;
-    padding: 1.5rem 0;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    margin-bottom: 1.5rem;
+.header-title p {
+    margin: 0;
 }
 
-.progress-bar-wrapper {
-    max-width: 600px;
-    margin: 0 auto;
+.header-spacer {
+    height: 110px;
+}
+
+/* === インラインプログレスインジケーター === */
+.progress-inline {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 2rem;
-}
-
-.progress-step {
-    display: flex;
-    flex-direction: column;
     align-items: center;
     gap: 0.5rem;
-    position: relative;
+    flex: 1;
+    max-width: 500px;
 }
 
-.progress-step-circle {
-    width: 48px;
-    height: 48px;
+.progress-step-inline {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+.progress-step-circle-inline {
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
-    background: var(--gray-200);
-    color: var(--gray-500);
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 600;
-    font-size: 1.125rem;
+    font-size: 0.875rem;
     transition: all 0.3s ease;
-    border: 3px solid var(--gray-200);
+    border: 2px solid rgba(255, 255, 255, 0.3);
 }
 
-.progress-step.active .progress-step-circle {
-    background: var(--primary-color);
-    color: white;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 4px rgba(44, 82, 130, 0.1);
+.progress-step-inline.active .progress-step-circle-inline {
+    background: white;
+    color: var(--primary-color);
+    border-color: white;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
 }
 
-.progress-step.completed .progress-step-circle {
+.progress-step-inline.completed .progress-step-circle-inline {
     background: var(--success-color);
-    color: white;
     border-color: var(--success-color);
 }
 
-.progress-step-label {
-    font-size: 0.875rem;
+.progress-step-label-inline {
+    font-size: 0.8125rem;
     font-weight: 600;
-    color: var(--gray-600);
+    color: rgba(255, 255, 255, 0.8);
     white-space: nowrap;
 }
 
-.progress-step.active .progress-step-label {
-    color: var(--primary-color);
+.progress-step-inline.active .progress-step-label-inline {
+    color: white;
 }
 
-.progress-step.completed .progress-step-label {
-    color: var(--success-color);
+.progress-step-inline.completed .progress-step-label-inline {
+    color: rgba(255, 255, 255, 0.9);
 }
 
-.progress-line {
+.progress-line-inline {
     flex: 1;
-    height: 3px;
-    background: var(--gray-200);
-    margin: 0 1rem;
-    position: relative;
-    top: -24px;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.2);
+    min-width: 30px;
     transition: all 0.3s ease;
 }
 
-.progress-line.active {
+.progress-line-inline.active {
     background: var(--success-color);
 }
 
+@media (max-width: 1024px) {
+    .header-content {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .progress-inline {
+        max-width: 100%;
+    }
+    
+    .header-spacer {
+        height: 160px;
+    }
+}
+
 @media (max-width: 768px) {
-    .progress-bar-wrapper {
-        padding: 0 1rem;
+    .header-title h1 {
+        font-size: 1.25rem;
     }
     
-    .progress-step-circle {
-        width: 40px;
-        height: 40px;
-        font-size: 1rem;
-    }
-    
-    .progress-step-label {
+    .progress-step-label-inline {
         font-size: 0.75rem;
     }
     
-    .progress-line {
-        margin: 0 0.5rem;
+    .progress-step-circle-inline {
+        width: 28px;
+        height: 28px;
+        font-size: 0.75rem;
     }
 }
 
@@ -162,7 +183,7 @@ body {
     display: flex;
     gap: 1.5rem;
     padding: 1.5rem;
-    min-height: calc(100vh - 200px);
+    min-height: calc(100vh - 110px);
 }
 
 .main-content-area {
@@ -190,9 +211,9 @@ body {
     box-shadow: var(--shadow-lg);
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 250px);
+    height: calc(100vh - 140px);
     position: sticky;
-    top: 1.5rem;
+    top: 120px;
     transition: all 0.3s ease;
 }
 
