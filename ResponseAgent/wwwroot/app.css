@@ -168,6 +168,7 @@ body {
 .main-content-area {
     flex: 1;
     min-width: 0;
+    transition: all 0.3s ease;
 }
 
 .grid-layout {
@@ -192,6 +193,21 @@ body {
     height: calc(100vh - 250px);
     position: sticky;
     top: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.chat-panel.collapsed {
+    width: 50px;
+    overflow: hidden;
+}
+
+.chat-panel.collapsed .chat-messages,
+.chat-panel.collapsed .chat-input-area {
+    display: none;
+}
+
+.chat-panel.collapsed .chat-header h6 {
+    display: none;
 }
 
 .chat-header {
@@ -208,6 +224,31 @@ body {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    flex: 1;
+}
+
+.btn-collapse {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0;
+}
+
+.btn-collapse:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+}
+
+.chat-panel.collapsed .btn-collapse {
+    margin: 0 auto;
 }
 
 .chat-messages {
