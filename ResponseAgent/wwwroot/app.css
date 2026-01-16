@@ -1,16 +1,16 @@
 /* === ドキュメントQ&Aアシスタント カスタムスタイル === */
 
 :root {
-    --primary-color: #2c5282;
-    --primary-light: #3b6ba8;
-    --primary-dark: #1a365d;
-    --secondary-color: #4a5568;
-    --secondary-light: #718096;
+    --primary-color: #f97316;
+    --primary-light: #fb923c;
+    --primary-dark: #ea580c;
+    --secondary-color: #f59e0b;
+    --secondary-light: #fbbf24;
     --success-color: #38a169;
     --danger-color: #e53e3e;
     --warning-color: #d69e2e;
     --info-color: #3182ce;
-    --light-bg: #f7fafc;
+    --light-bg: #fffbf0;
     --gray-50: #f8fafc;
     --gray-100: #edf2f7;
     --gray-200: #e2e8f0;

@@ -1,0 +1,73 @@
+name: Deploy to Azure App Service with OIDC
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  id-token: write     # OIDC トークン生成を許可
+  contents: read
+
+env:
+  AZURE_WEBAPP_NAME: app-20260115-staging
+  AZURE_WEBAPP_PACKAGE_PATH: './ResponseAgent'
+  DOTNET_VERSION: '8.0.x'
+  RESOURCE_GROUP: rg-app-20260115
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. コードをチェックアウト
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. .NET 8 SDK をセットアップ
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      # 3. 依存関係を復元
+      - name: Restore dependencies
+        run: dotnet restore "${{ env.AZURE_WEBAPP_PACKAGE_PATH }}"
+
+      # 4. Release ビルド
+      - name: Build
+        run: dotnet build --configuration Release --no-restore "${{ env.AZURE_WEBAPP_PACKAGE_PATH }}"
+
+      # 5. Publish
+      - name: Publish
+        run: |
+          dotnet publish "${{ env.AZURE_WEBAPP_PACKAGE_PATH }}" \
+            -c Release \
+            -o '${{ github.workspace }}/publish'
+
+      # 6. Azure へ OIDC でログイン
+      - name: Azure login with OIDC
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      # 7. App Service へデプロイ（フォルダ全体をZip化してデプロイ）
+      - name: Create deployment package
+        run: |
+          cd ${{ github.workspace }}/publish
+          zip -r -q ../deployment.zip .
+
+      # 8. App Service へデプロイ
+      - name: Deploy to Azure App Service
+        run: |
+          az webapp deployment source config-zip \
+            --resource-group "${{ env.RESOURCE_GROUP }}" \
+            --name "${{ env.AZURE_WEBAPP_NAME }}" \
+            --src "${{ github.workspace }}/deployment.zip"
+
+      # 9. Azure ログアウト
+      - name: Azure logout
+        run: az logout
+        if: always()
