@@ -236,20 +236,27 @@
 
     <!-- 右下: レビュー結果 -->
     <div class="grid-item review-section">
-        @if (!string.IsNullOrEmpty(reviewResult) || isReviewing)
+        @if (!string.IsNullOrEmpty(reviewResult) || isReviewing || !string.IsNullOrEmpty(rewrittenResponse))
         {
             <div class="custom-card">
                 <div class="card-header-custom card-header-review">
                     <h5>
                         <i class="bi bi-clipboard-check"></i>
-                        レビュー結果
-                        @if (isReviewing)
+                        @if (string.IsNullOrEmpty(rewrittenResponse))
+                        {
+                            <span>レビュー結果</span>
+                        }
+                        else
+                        {
+                            <span>修正内容</span>
+                        }
+                        @if (isReviewing || isRewriting)
                         {
                             <span class="spinner-border spinner-border-sm ms-2" role="status"></span>
                         }
                         else
                         {
-                            <button class="btn btn-icon-copy" @onclick="() => CopyToClipboard(reviewResult)" title="コピー">
+                            <button class="btn btn-icon-copy" @onclick="() => CopyToClipboard(string.IsNullOrEmpty(rewrittenResponse) ? reviewResult : rewrittenResponse)" title="コピー">
                                 <i class="bi bi-clipboard"></i>
                             </button>
                         }
@@ -263,17 +270,44 @@
                             <span style="color: var(--warning-color); font-weight: 600;">AIがレビュー中...</span>
                         </div>
                     }
+                    else if (isRewriting)
+                    {
+                        <div class="loading-overlay">
+                            <div class="spinner-custom"></div>
+                            <span style="color: var(--warning-color); font-weight: 600;">AIが修正を実行中...</span>
+                        </div>
+                    }
+                    else if (!string.IsNullOrEmpty(rewrittenResponse))
+                    {
+                        <!-- 差分表示 -->
+                        <DiffDisplay OriginalText="@generatedResponse" ModifiedText="@rewrittenResponse" />
+                        
+                        <div class="mt-3 d-flex gap-2">
+                            <button class="btn btn-sm btn-outline-primary" @onclick="ResetDiff">
+                                <i class="bi bi-arrow-left"></i> レビュー結果に戻す
+                            </button>
+                            <button class="btn btn-sm btn-success" @onclick="() => CopyToClipboard(rewrittenResponse)">
+                                <i class="bi bi-check"></i> 修正を採用
+                            </button>
+                        </div>
+                    }
                     else
                     {
                         <div class="content-display review-content">
                             @reviewResult
                         </div>
                         
-                        <div class="mt-3">
+                        <div class="mt-3 d-flex gap-2">
                             <span class="badge bg-warning text-dark">
                                 <i class="bi bi-file-text"></i>
                                 @(reviewResult?.Length ?? 0) 文字
                             </span>
+                            @if (!string.IsNullOrEmpty(generatedResponse) && !generatedResponse.StartsWith("エラー"))
+                            {
+                                <button class="btn btn-sm btn-primary" @onclick="ExecuteRewrite">
+                                    <i class="bi bi-pencil-square"></i> 修正を実行
+                                </button>
+                            }
                         </div>
                     }
                 </div>
@@ -367,6 +401,7 @@
 private bool isProcessing = false;
 private bool isGenerating = false;
 private bool isReviewing = false;
+private bool isRewriting = false;
 private bool isChatting = false;
 private bool isChatCollapsed = false;
 private int currentStep = 0;
@@ -375,6 +410,7 @@ private string? statusMessage;
 private string? extractedQuestion;
 private string? generatedResponse;
 private string? reviewResult;
+private string? rewrittenResponse;
 private string chatInput = "";
 private List<ChatMessage> chatMessages = new();
 private ElementReference chatMessagesContainer;
@@ -512,9 +548,40 @@ private ElementReference chatMessagesContainer;
         extractedQuestion = null;
         generatedResponse = null;
         reviewResult = null;
+        rewrittenResponse = null;
         errorMessage = null;
         statusMessage = null;
         currentStep = 0;
+        StateHasChanged();
+    }
+
+    private async Task ExecuteRewrite()
+    {
+        if (string.IsNullOrWhiteSpace(generatedResponse))
+            return;
+
+        try
+        {
+            isRewriting = true;
+            rewrittenResponse = null;
+            await InvokeAsync(StateHasChanged);
+
+            rewrittenResponse = await AgentService.RewriteResponseAsync(generatedResponse, reviewResult!);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"修正中にエラーが発生しました: {ex.Message}";
+        }
+        finally
+        {
+            isRewriting = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private void ResetDiff()
+    {
+        rewrittenResponse = null;
         StateHasChanged();
     }
 
