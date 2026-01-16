@@ -35,50 +35,50 @@ public class AgentService : IAgentService
 
         if (string.IsNullOrWhiteSpace(endpoint))
         {
-            _logger.LogError("Foundry Agent �G���h�|�C���g���ݒ肳��Ă��܂���");
-            return "�G���[: Foundry Agent �G���h�|�C���g���ݒ肳��Ă��܂���Bappsettings.json ���m�F���Ă��������B";
+            _logger.LogError("Foundry Agent エンドポイントが設定されていません");
+            return "エラー: Foundry Agent エンドポイントが設定されていません。appsettings.json を確認してください。";
         }
 
         if (string.IsNullOrWhiteSpace(agentName))
         {
-            _logger.LogError("Agent �����ݒ肳��Ă��܂���");
-            return "�G���[: Agent �����ݒ肳��Ă��܂���Bappsettings.json ���m�F���Ă��������B";
+            _logger.LogError("Agent 名が設定されていません");
+            return "エラー: Agent 名が設定されていません。appsettings.json を確認してください。";
         }
 
         try
         {
-            // AIProjectClient ���쐬 (App Service �ł̓}�l�[�W�hID���g�p)
+            // AIProjectClient を作成 (App Service ではマネージドID を使用)
             var credential = new DefaultAzureCredential();
             var projectClient = new AIProjectClient(new Uri(endpoint), credential);
 
-            // ��b���쐬
+            // 会話を作成
             var conversationResult = projectClient.OpenAI.Conversations.CreateProjectConversation();
             var conversation = conversationResult.Value;
             
-            _logger.LogInformation("��b���쐬���܂���: {ConversationId}", conversation.Id);
+            _logger.LogInformation("会話を作成しました: {ConversationId}", conversation.Id);
 
-            // ProjectResponsesClient ���擾
+            // ProjectResponsesClient を取得
             var responsesClient = projectClient.OpenAI.GetProjectResponsesClientForAgent(
                 defaultAgent: agentName,
                 defaultConversationId: conversation.Id);
 
-            _logger.LogInformation("�G�[�W�F���g '{AgentName}' �Ƀ��b�Z�[�W�𑗐M��...", agentName);
+            _logger.LogInformation("エージェント '{AgentName}' にメッセージを送信中...", agentName);
 
-            // �G�[�W�F���g�Ƀ��b�Z�[�W�𑗐M
+            // エージェントにメッセージを送信
             var responseResult = await Task.Run(() => responsesClient.CreateResponse(questionText), cancellationToken);
             var response = responseResult.Value;
 
-            // �����e�L�X�g���擾
+            // テキスト内容を取得
             var responseText = response.GetOutputText();
 
-            _logger.LogInformation("�G�[�W�F���g���牞������M���܂���");
+            _logger.LogInformation("エージェントから応答を受け取りました");
 
             return responseText;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "AI�G�[�W�F���g���s���ɃG���[���������܂���");
-            return $"�G���[: {ex.Message}\n\n�ݒ���m�F���Ă�������:\n- �G���h�|�C���g: {endpoint}\n- �G�[�W�F���g��: {agentName}";
+            _logger.LogError(ex, "AI エージェント処理中にエラーが発生しました");
+            return $"エラー: {ex.Message}\n\n設定を確認してください:\n- エンドポイント: {endpoint}\n- エージェント名: {agentName}";
         }
     }
 
@@ -91,53 +91,53 @@ public class AgentService : IAgentService
 
         if (string.IsNullOrWhiteSpace(endpoint))
         {
-            _logger.LogError("Foundry Agent �G���h�|�C���g���ݒ肳��Ă��܂���");
-            return "�G���[: Foundry Agent �G���h�|�C���g���ݒ肳��Ă��܂���Bappsettings.json ���m�F���Ă��������B";
+            _logger.LogError("Foundry Agent エンドポイントが設定されていません");
+            return "エラー: Foundry Agent エンドポイントが設定されていません。appsettings.json を確認してください。";
         }
 
         if (string.IsNullOrWhiteSpace(reviewAgentName))
         {
-            _logger.LogError("Review Agent �����ݒ肳��Ă��܂���");
-            return "�G���[: Review Agent �����ݒ肳��Ă��܂���Bappsettings.json �� ReviewAgentId ���m�F���Ă��������B";
+            _logger.LogError("Review Agent 名が設定されていません");
+            return "エラー: Review Agent 名が設定されていません。appsettings.json を確認してください。";
         }
 
         try
         {
-            // AIProjectClient ���쐬 (App Service �ł̓}�l�[�W�hID���g�p)
+            // AIProjectClient を作成 (App Service ではマネージドID を使用)
             var credential = new DefaultAzureCredential();
             var projectClient = new AIProjectClient(new Uri(endpoint), credential);
 
-            // ��b���쐬
+            // 会話を作成
             var conversationResult = projectClient.OpenAI.Conversations.CreateProjectConversation();
             var conversation = conversationResult.Value;
             
-            _logger.LogInformation("���r���[�p��b���쐬���܂���: {ConversationId}", conversation.Id);
+            _logger.LogInformation("レビュー用の会話を作成しました: {ConversationId}", conversation.Id);
 
-            // ProjectResponsesClient ���擾�i���r���[�G�[�W�F���g�p�j
+            // ProjectResponsesClient を取得 (レビュー エージェント用)
             var responsesClient = projectClient.OpenAI.GetProjectResponsesClientForAgent(
                 defaultAgent: reviewAgentName,
                 defaultConversationId: conversation.Id);
 
-            _logger.LogInformation("���r���[�G�[�W�F���g '{ReviewAgentName}' �Ƀ��b�Z�[�W�𑗐M��...", reviewAgentName);
+            _logger.LogInformation("レビュー エージェント '{ReviewAgentName}' にメッセージを送信中...", reviewAgentName);
 
-            // ���r���[�˗����b�Z�[�W���쐬
-            var reviewRequest = $"�ȉ��̓��وĂ����r���[���Ă�������:\n\n{responseText}";
+            // レビュー依頼メッセージを作成
+            var reviewRequest = $"以下のテキストをレビュー・改善してください。改善箇所を指摘してください:\n\n{responseText}";
 
-            // �G�[�W�F���g�Ƀ��b�Z�[�W�𑗐M
+            // エージェントにメッセージを送信
             var responseResult = await Task.Run(() => responsesClient.CreateResponse(reviewRequest), cancellationToken);
             var response = responseResult.Value;
 
-            // �����e�L�X�g���擾
+            // テキスト内容を取得
             var reviewText = response.GetOutputText();
 
-            _logger.LogInformation("���r���[�G�[�W�F���g���牞������M���܂���");
+            _logger.LogInformation("レビュー エージェントから応答を受け取りました");
 
             return reviewText;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "���r���[�G�[�W�F���g���s���ɃG���[���������܂���");
-            return $"�G���[: {ex.Message}\n\n�ݒ���m�F���Ă�������:\n- �G���h�|�C���g: {endpoint}\n- ���r���[�G�[�W�F���g��: {reviewAgentName}";
+            _logger.LogError(ex, "レビュー エージェント処理中にエラーが発生しました");
+            return $"エラー: {ex.Message}\n\n設定を確認してください:\n- エンドポイント: {endpoint}\n- レビュー エージェント名: {reviewAgentName}";
         }
     }
 
@@ -171,7 +171,7 @@ public class AgentService : IAgentService
             
             _logger.LogInformation("修正用の会話を作成しました: {ConversationId}", conversation.Id);
 
-            // ProjectResponsesClient を取得（修正エージェント用）
+            // ProjectResponsesClient を取得 (修正エージェント用)
             var responsesClient = projectClient.OpenAI.GetProjectResponsesClientForAgent(
                 defaultAgent: rewriteAgentName,
                 defaultConversationId: conversation.Id);
@@ -179,7 +179,7 @@ public class AgentService : IAgentService
             _logger.LogInformation("修正エージェント '{RewriteAgentName}' にメッセージを送信中...", rewriteAgentName);
 
             // 修正リクエストメッセージを作成
-            var rewriteRequest = $"以下のAI生成テキストを改善・修正してください。修正内容は元のテキストとの差分を含めて提示してください:\n\n{responseText}";
+            var rewriteRequest = $"以下の AI 生成テキストを改善・修正してください。修正内容は元のテキストとの差分を含めて提示してください:\n\n{responseText}";
 
             // エージェントにメッセージを送信
             var responseResult = await Task.Run(() => responsesClient.CreateResponse(rewriteRequest), cancellationToken);
@@ -209,14 +209,14 @@ public class AgentService : IAgentService
 
         if (string.IsNullOrWhiteSpace(endpoint))
         {
-            _logger.LogError("Foundry Agent �G���h�|�C���g���ݒ肳��Ă��܂���");
-            return "�G���[: Foundry Agent �G���h�|�C���g���ݒ肳��Ă��܂���B";
+            _logger.LogError("Foundry Agent エンドポイントが設定されていません");
+            return "エラー: Foundry Agent エンドポイントが設定されていません。";
         }
 
         if (string.IsNullOrWhiteSpace(chatAgentName))
         {
-            _logger.LogError("Chat Agent �����ݒ肳��Ă��܂���");
-            return "�G���[: Chat Agent �����ݒ肳��Ă��܂���Bappsettings.json �� ChatAgentId ���m�F���Ă��������B";
+            _logger.LogError("Chat Agent 名が設定されていません");
+            return "エラー: Chat Agent 名が設定されていません。appsettings.json を確認してください。";
         }
 
         try
@@ -227,32 +227,32 @@ public class AgentService : IAgentService
             var conversationResult = projectClient.OpenAI.Conversations.CreateProjectConversation();
             var conversation = conversationResult.Value;
             
-            _logger.LogInformation("�`���b�g�p��b���쐬���܂���: {ConversationId}", conversation.Id);
+            _logger.LogInformation("チャット用の会話を作成しました: {ConversationId}", conversation.Id);
 
             var responsesClient = projectClient.OpenAI.GetProjectResponsesClientForAgent(
                 defaultAgent: chatAgentName,
                 defaultConversationId: conversation.Id);
 
-            _logger.LogInformation("�`���b�g�G�[�W�F���g '{ChatAgentName}' �Ƀ��b�Z�[�W�𑗐M��...", chatAgentName);
+            _logger.LogInformation("チャット エージェント '{ChatAgentName}' にメッセージを送信中...", chatAgentName);
 
-            // �R���e�L�X�g���܂߂����b�Z�[�W���쐬
+            // コンテキストを含めたメッセージを作成
             var messageWithContext = string.IsNullOrWhiteSpace(context)
                 ? userMessage
-                : $"�y��ʏ�̏��z\n{context}\n\n�y���[�U�[�̎���z\n{userMessage}";
+                : $"【既知の背景】\n{context}\n\n【ユーザーの質問】\n{userMessage}";
 
             var responseResult = await Task.Run(() => responsesClient.CreateResponse(messageWithContext), cancellationToken);
             var response = responseResult.Value;
 
             var chatResponse = response.GetOutputText();
 
-            _logger.LogInformation("�`���b�g�G�[�W�F���g���牞������M���܂���");
+            _logger.LogInformation("チャット エージェントから応答を受け取りました");
 
             return chatResponse;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "�`���b�g�G�[�W�F���g���s���ɃG���[���������܂���");
-            return $"�G���[: {ex.Message}";
+            _logger.LogError(ex, "チャット エージェント処理中にエラーが発生しました");
+            return $"エラー: {ex.Message}";
         }
     }
 }
