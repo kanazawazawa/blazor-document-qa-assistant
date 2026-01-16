@@ -7,9 +7,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-// アプリケーションサービスの登録
+// Services registration
 builder.Services.AddScoped<IFileProcessingService, FileProcessingService>();
 builder.Services.AddScoped<IAgentService, AgentService>();
+builder.Services.AddScoped<IVoiceChatService, VoiceChatService>();
 
 var app = builder.Build();
 

@@ -318,81 +318,105 @@
         </div>
     </div>
 
-    <!-- 右側: Copilot風チャットパネル -->
+    <!-- 右側: チャット & 音声パネル -->
     <div class="chat-panel @(isChatCollapsed ? "collapsed" : "")">
         <div class="chat-header">
-            <h6>
-                <i class="bi bi-chat-dots-fill"></i>
-                AI アシスタント
-            </h6>
-            <button class="btn-collapse" @onclick="ToggleChat" title="@(isChatCollapsed ? "展開" : "折りたたむ")">
-                <i class="bi bi-chevron-@(isChatCollapsed ? "left" : "right")"></i>
-            </button>
+            <div>
+                <h6>
+                    <i class="bi bi-chat-dots-fill"></i>
+                    AI アシスタント
+                </h6>
+            </div>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <button class="btn btn-sm @(activeChatTab == "text" ? "btn-primary" : "btn-outline-secondary")" 
+                        @onclick="@(() => SetActiveChatTab("text"))"
+                        title="テキストチャット">
+                    <i class="bi bi-chat-fill"></i>
+                </button>
+                <button class="btn btn-sm @(activeChatTab == "voice" ? "btn-primary" : "btn-outline-secondary")" 
+                        @onclick="@(() => SetActiveChatTab("voice"))"
+                        title="音声チャット">
+                    <i class="bi bi-mic-fill"></i>
+                </button>
+                <button class="btn-collapse" @onclick="ToggleChat" title="@(isChatCollapsed ? "展開" : "折りたたむ")">
+                    <i class="bi bi-chevron-@(isChatCollapsed ? "left" : "right")"></i>
+                </button>
+            </div>
         </div>
         
-        <div class="chat-messages" @ref="chatMessagesContainer">
-            @if (chatMessages.Count == 0)
-            {
-                <div class="chat-welcome">
-                    <i class="bi bi-lightbulb"></i>
-                    <p>画面上の情報について質問できます</p>
-                    <small class="text-muted">例: 「この答弁案の要点は？」</small>
-                </div>
-            }
-            else
-            {
-                @foreach (var message in chatMessages)
+        <!-- テキストチャットタブ -->
+        @if (activeChatTab == "text")
+        {
+            <div class="chat-messages" @ref="chatMessagesContainer">
+                @if (chatMessages.Count == 0)
                 {
-                    <div class="chat-message @message.Role">
-                        <div class="chat-message-avatar">
-                            @if (message.Role == "user")
-                            {
-                                <i class="bi bi-person-circle"></i>
-                            }
-                            else
-                            {
-                                <i class="bi bi-robot"></i>
-                            }
-                        </div>
-                        <div class="chat-message-content">
-                            @message.Content
-                        </div>
+                    <div class="chat-welcome">
+                        <i class="bi bi-lightbulb"></i>
+                        <p>画面上の情報について質問できます</p>
+                        <small class="text-muted">例: 「この答弁案の要点は？」</small>
                     </div>
-                }
-                
-                @if (isChatting)
-                {
-                    <div class="chat-message assistant">
-                        <div class="chat-message-avatar">
-                            <i class="bi bi-robot"></i>
-                        </div>
-                        <div class="chat-message-content">
-                            <span class="typing-indicator">
-                                <span></span><span></span><span></span>
-                            </span>
-                        </div>
-                    </div>
-                }
-            }
-        </div>
-        
-        <div class="chat-input-area">
-            <textarea @bind="chatInput"
-                      @onkeydown="HandleChatKeyDown"
-                      placeholder="質問を入力..."
-                      rows="2"
-                      disabled="@isChatting"></textarea>
-            <button class="btn-send" @onclick="SendChatMessage" disabled="@(isChatting || string.IsNullOrWhiteSpace(chatInput))">
-                @if (isChatting)
-                {
-                    <span class="spinner-border spinner-border-sm"></span>
                 }
                 else
                 {
-                    <i class="bi bi-send-fill"></i>
+                    @foreach (var message in chatMessages)
+                    {
+                        <div class="chat-message @message.Role">
+                            <div class="chat-message-avatar">
+                                @if (message.Role == "user")
+                                {
+                                    <i class="bi bi-person-circle"></i>
+                                }
+                                else
+                                {
+                                    <i class="bi bi-robot"></i>
+                                }
+                            </div>
+                            <div class="chat-message-content">
+                                @message.Content
+                            </div>
+                        </div>
+                    }
+                    
+                    @if (isChatting)
+                    {
+                        <div class="chat-message assistant">
+                            <div class="chat-message-avatar">
+                                <i class="bi bi-robot"></i>
+                            </div>
+                            <div class="chat-message-content">
+                                <span class="typing-indicator">
+                                    <span></span><span></span><span></span>
+                                </span>
+                            </div>
+                        </div>
+                    }
                 }
-            </button>
-        </div>
+            </div>
+            
+            <div class="chat-input-area">
+                <textarea @bind="chatInput"
+                          @onkeydown="HandleChatKeyDown"
+                          placeholder="質問を入力..."
+                          rows="2"
+                          disabled="@isChatting"></textarea>
+                <button class="btn-send" @onclick="SendChatMessage" disabled="@(isChatting || string.IsNullOrWhiteSpace(chatInput))">
+                    @if (isChatting)
+                    {
+                        <span class="spinner-border spinner-border-sm"></span>
+                    }
+                    else
+                    {
+                        <i class="bi bi-send-fill"></i>
+                    }
+                </button>
+            </div>
+        }
+        
+        <!-- 音声チャットタブ -->
+        @if (activeChatTab == "voice")
+        {
+            <VoiceChat />
+        }
     </div>
     
 </div>
@@ -404,6 +428,7 @@ private bool isReviewing = false;
 private bool isRewriting = false;
 private bool isChatting = false;
 private bool isChatCollapsed = false;
+private string activeChatTab = "text";
 private int currentStep = 0;
 private string? errorMessage;
 private string? statusMessage;
@@ -679,6 +704,12 @@ private ElementReference chatMessagesContainer;
     private void ToggleChat()
     {
         isChatCollapsed = !isChatCollapsed;
+        StateHasChanged();
+    }
+
+    private void SetActiveChatTab(string tab)
+    {
+        activeChatTab = tab;
         StateHasChanged();
     }
 }

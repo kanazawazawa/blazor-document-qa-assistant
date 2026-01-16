@@ -9,7 +9,7 @@
   "FoundryAgent": {
     "Endpoint": "YOUR_FOUNDRY_ENDPOINT_HERE",
     "AgentId": "YOUR_AGENT_ID_HERE",
-    "ReviewAgentId": "YOUR_REVIEW_AGENT_ID_HERE",
+    "ReviewAgentId": "Answer-Check",
     "RewriteAgentId": "Answer-Rewrite",
     "ChatAgentId": "YOUR_CHAT_AGENT_ID_HERE"
   }
