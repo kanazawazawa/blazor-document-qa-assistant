@@ -213,7 +213,7 @@
                             </button>
                             <span class="badge bg-success ms-auto">
                                 <i class="bi bi-file-text"></i>
-                                @(generatedResponse.Length) 文字
+                                @(generatedResponse?.Length ?? 0) 文字
                             </span>
                         </div>
                     }
@@ -566,7 +566,7 @@ private ElementReference chatMessagesContainer;
             rewrittenResponse = null;
             await InvokeAsync(StateHasChanged);
 
-            rewrittenResponse = await AgentService.RewriteResponseAsync(generatedResponse, reviewResult!);
+            rewrittenResponse = await AgentService.RewriteResponseAsync(generatedResponse);
         }
         catch (Exception ex)
         {
