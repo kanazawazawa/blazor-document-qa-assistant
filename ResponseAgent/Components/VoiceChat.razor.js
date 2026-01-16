@@ -22,13 +22,32 @@ export async function startRecording() {
             }
         });
 
-        // MediaRecorder を初期化
-        const mimeType = 'audio/wav';
+        // サポートされている MIME タイプを検出
+        const mimeTypes = [
+            'audio/webm',
+            'audio/webm;codecs=opus',
+            'audio/ogg;codecs=opus',
+            'audio/mp4',
+            'audio/mpeg'
+        ];
+        
+        let selectedMimeType = '';
+        for (const type of mimeTypes) {
+            if (MediaRecorder.isTypeSupported(type)) {
+                selectedMimeType = type;
+                console.log(`Using MIME type: ${type}`);
+                break;
+            }
+        }
+
+        if (!selectedMimeType) {
+            throw new Error('このブラウザは音声録音をサポートしていません');
+        }
+
         recordedChunks = [];
         
         mediaRecorder = new MediaRecorder(mediaStream, {
-            mimeType: mimeType,
-            audioBitsPerSecond: 128000
+            mimeType: selectedMimeType
         });
 
         mediaRecorder.ondataavailable = (event) => {
@@ -54,8 +73,9 @@ export async function stopRecording() {
 
         mediaRecorder.onstop = async () => {
             try {
-                // 音声データを Blob にまとめる
-                const audioBlob = new Blob(recordedChunks, { type: 'audio/wav' });
+                // 音声データを Blob にまとめる（MediaRecorder の mimeType を使用）
+                const mimeType = mediaRecorder.mimeType || 'audio/webm';
+                const audioBlob = new Blob(recordedChunks, { type: mimeType });
                 
                 // Blob を ArrayBuffer に変換
                 const arrayBuffer = await audioBlob.arrayBuffer();
@@ -66,7 +86,7 @@ export async function stopRecording() {
                     mediaStream.getTracks().forEach(track => track.stop());
                 }
 
-                console.log(`Recording stopped. Audio data size: ${uint8Array.length} bytes`);
+                console.log(`Recording stopped. Audio data size: ${uint8Array.length} bytes, type: ${mimeType}`);
                 
                 // byte[] として返す
                 resolve(Array.from(uint8Array));
