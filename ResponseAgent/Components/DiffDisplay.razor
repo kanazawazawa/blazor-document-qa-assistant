@@ -1,11 +1,12 @@
 @using System.Collections.Generic
 @using System.Linq
+@using System.Text.RegularExpressions
 
 <div class="diff-display-container">
     <div class="diff-header">
         <h5>
             <i class="bi bi-arrow-left-right"></i>
-            修正前後の差分
+            答弁本文の修正内容
         </h5>
     </div>
 
@@ -17,23 +18,26 @@
                 <div class="diff-column">
                     <div class="diff-column-header">修正前</div>
                     <div class="diff-text original-text">
-                        @foreach (var line in GetDiffLines(OriginalText, ModifiedText, isOriginal: true))
+                        @foreach (var line in GetDiffLines(ExtractAnswerBody(OriginalText), ExtractAnswerBody(ModifiedText), isOriginal: true))
                         {
-                            <div class="diff-line @line.Class">
-                                @if (line.IsRemoved)
-                                {
-                                    <span class="diff-marker">- </span>
-                                }
-                                else if (line.IsAdded)
-                                {
-                                    <span class="diff-marker" style="visibility: hidden;">- </span>
-                                }
-                                else
-                                {
-                                    <span class="diff-marker">  </span>
-                                }
-                                @line.Content
-                            </div>
+                            @if (line.IsRemoved || line.IsModified || ShowUnchangedLines)
+                            {
+                                <div class="diff-line @line.Class">
+                                    @if (line.IsRemoved)
+                                    {
+                                        <span class="diff-marker">- </span>
+                                    }
+                                    else if (line.IsModified)
+                                    {
+                                        <span class="diff-marker">~ </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="diff-marker">  </span>
+                                    }
+                                    @((MarkupString)HighlightChanges(line.Content, line.OriginalWords, line.ModifiedWords))
+                                </div>
+                            }
                         }
                     </div>
                 </div>
@@ -42,26 +46,36 @@
                 <div class="diff-column">
                     <div class="diff-column-header">修正後</div>
                     <div class="diff-text modified-text">
-                        @foreach (var line in GetDiffLines(OriginalText, ModifiedText, isOriginal: false))
+                        @foreach (var line in GetDiffLines(ExtractAnswerBody(OriginalText), ExtractAnswerBody(ModifiedText), isOriginal: false))
                         {
-                            <div class="diff-line @line.Class">
-                                @if (line.IsAdded)
-                                {
-                                    <span class="diff-marker">+ </span>
-                                }
-                                else if (line.IsRemoved)
-                                {
-                                    <span class="diff-marker" style="visibility: hidden;">+ </span>
-                                }
-                                else
-                                {
-                                    <span class="diff-marker">  </span>
-                                }
-                                @line.Content
-                            </div>
+                            @if (line.IsAdded || line.IsModified || ShowUnchangedLines)
+                            {
+                                <div class="diff-line @line.Class">
+                                    @if (line.IsAdded)
+                                    {
+                                        <span class="diff-marker">+ </span>
+                                    }
+                                    else if (line.IsModified)
+                                    {
+                                        <span class="diff-marker">~ </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="diff-marker">  </span>
+                                    }
+                                    @((MarkupString)HighlightChanges(line.Content, line.OriginalWords, line.ModifiedWords))
+                                </div>
+                            }
                         }
                     </div>
                 </div>
+            </div>
+            
+            <div class="diff-footer">
+                <button class="btn btn-sm btn-outline-secondary" @onclick="ToggleUnchangedLines">
+                    <i class="bi bi-eye@(ShowUnchangedLines ? "-slash" : "")"></i>
+                    @(ShowUnchangedLines ? "変更箇所のみ表示" : "全行を表示")
+                </button>
             </div>
         }
         else
@@ -81,18 +95,291 @@
     [Parameter]
     public string ModifiedText { get; set; } = string.Empty;
 
+    private bool ShowUnchangedLines { get; set; } = false;
+
+    private void ToggleUnchangedLines()
+    {
+        ShowUnchangedLines = !ShowUnchangedLines;
+    }
+
+    /// <summary>
+    /// 答弁本文のみを抽出
+    /// </summary>
+    private string ExtractAnswerBody(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            return string.Empty;
+
+        // 【答弁本文】セクションを抽出
+        var match = Regex.Match(text, @"【答弁本文】\s*(.*)", RegexOptions.Singleline);
+        if (match.Success)
+        {
+            return match.Groups[1].Value.Trim();
+        }
+
+        // 【答弁本文】が見つからない場合は全文を返す
+        return text;
+    }
+
+    /// <summary>
+    /// 単語レベルの変更をハイライト
+    /// </summary>
+    private string HighlightChanges(string content, List<string> originalWords, List<string> modifiedWords)
+    {
+        if (originalWords == null || modifiedWords == null || originalWords.Count == 0)
+            return System.Net.WebUtility.HtmlEncode(content);
+
+        var highlighted = System.Net.WebUtility.HtmlEncode(content);
+        
+        // 変更された単語を <mark> タグでハイライト
+        foreach (var word in originalWords.Except(modifiedWords))
+        {
+            if (!string.IsNullOrWhiteSpace(word))
+            {
+                var encoded = System.Net.WebUtility.HtmlEncode(word);
+                highlighted = highlighted.Replace(encoded, $"<mark class=\"diff-highlight-removed\">{encoded}</mark>");
+            }
+        }
+
+        foreach (var word in modifiedWords.Except(originalWords))
+        {
+            if (!string.IsNullOrWhiteSpace(word))
+            {
+                var encoded = System.Net.WebUtility.HtmlEncode(word);
+                highlighted = highlighted.Replace(encoded, $"<mark class=\"diff-highlight-added\">{encoded}</mark>");
+            }
+        }
+
+        return highlighted;
+    }
+
     private class DiffLine
     {
         public string Content { get; set; } = string.Empty;
         public bool IsAdded { get; set; }
         public bool IsRemoved { get; set; }
-        public string Class => IsAdded ? "added" : (IsRemoved ? "removed" : "unchanged");
+        public bool IsModified { get; set; }
+        public List<string> OriginalWords { get; set; } = new();
+        public List<string> ModifiedWords { get; set; } = new();
+        public string Class => IsAdded ? "added" : (IsRemoved ? "removed" : (IsModified ? "modified" : "unchanged"));
     }
 
     private List<DiffLine> GetDiffLines(string original, string modified, bool isOriginal)
     {
-        var originalLines = original.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
-        var modifiedLines = modified.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
+        var originalLines = original.Split(new[] { Environment.NewLine, "\n" }, StringSplitOptions.None);
+        var modifiedLines = modified.Split(new[] { Environment.NewLine, "\n" }, StringSplitOptions.None);
+
+        var diff = ComputeDiff(originalLines, modifiedLines);
+        var result = new List<DiffLine>();
+
+        foreach (var item in diff)
+        {
+            var line = new DiffLine
+            {
+                Content = item.Content,
+                IsAdded = item.IsAdded,
+                IsRemoved = item.IsRemoved,
+                IsModified = item.IsModified
+            };
+
+            // 変更行の場合、単語レベルの差分を計算
+            if (item.IsModified && !string.IsNullOrWhiteSpace(item.OriginalContent) && !string.IsNullOrWhiteSpace(item.Content))
+            {
+                line.OriginalWords = SplitIntoWords(item.OriginalContent);
+                line.ModifiedWords = SplitIntoWords(item.Content);
+            }
+
+            result.Add(line);
+        }
+
+        // isOriginal が true の場合は削除行を、false の場合は追加行を返す
+        if (isOriginal)
+        {
+            // 修正前: 削除行と変更行と共通行を表示
+            return result.Where(l => !l.IsAdded).ToList();
+        }
+        else
+        {
+            // 修正後: 追加行と変更行と共通行を表示
+            return result.Where(l => !l.IsRemoved).ToList();
+        }
+    }
+
+    /// <summary>
+    /// テキストを単語に分割
+    /// </summary>
+    private List<string> SplitIntoWords(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            return new List<string>();
+
+        // 日本語の場合、文字単位で分割
+        // 英数字の場合は単語単位で分割
+        var words = new List<string>();
+        var currentWord = "";
+
+        foreach (var c in text)
+        {
+            if (char.IsWhiteSpace(c))
+            {
+                if (!string.IsNullOrEmpty(currentWord))
+                {
+                    words.Add(currentWord);
+                    currentWord = "";
+                }
+                words.Add(c.ToString());
+            }
+            else if (IsAlphanumeric(c))
+            {
+                currentWord += c;
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(currentWord))
+                {
+                    words.Add(currentWord);
+                    currentWord = "";
+                }
+                words.Add(c.ToString());
+            }
+        }
+
+        if (!string.IsNullOrEmpty(currentWord))
+            words.Add(currentWord);
+
+        return words;
+    }
+
+    private bool IsAlphanumeric(char c)
+    {
+        return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9');
+    }
+
+    private class DiffItem
+    {
+        public string Content { get; set; } = string.Empty;
+        public string OriginalContent { get; set; } = string.Empty;
+        public bool IsAdded { get; set; }
+        public bool IsRemoved { get; set; }
+        public bool IsModified { get; set; }
+    }
+
+    /// <summary>
+    /// 行レベルの差分を計算（LCS アルゴリズム）
+    /// </summary>
+    private List<DiffItem> ComputeDiff(string[] original, string[] modified)
+    {
+        var lcs = ComputeLCS(original, modified);
+        var result = new List<DiffItem>();
+        
+        int i = 0, j = 0, k = 0;
+        
+        while (i < original.Length || j < modified.Length)
+        {
+            if (k < lcs.Length && i < original.Length && j < modified.Length && 
+                original[i] == lcs[k] && modified[j] == lcs[k])
+            {
+                // 共通行
+                result.Add(new DiffItem { Content = original[i], IsAdded = false, IsRemoved = false, IsModified = false });
+                i++; j++; k++;
+            }
+            else if (k < lcs.Length && i < original.Length && original[i] == lcs[k])
+            {
+                // 追加行
+                result.Add(new DiffItem { Content = modified[j], IsAdded = true, IsRemoved = false, IsModified = false });
+                j++;
+            }
+            else if (k < lcs.Length && j < modified.Length && modified[j] == lcs[k])
+            {
+                // 削除行
+                result.Add(new DiffItem { Content = original[i], IsAdded = false, IsRemoved = true, IsModified = false });
+                i++;
+            }
+            else
+            {
+                // 変更行（削除＋追加）
+                if (i < original.Length && j < modified.Length)
+                {
+                    // 同じ位置の行が変更された
+                    result.Add(new DiffItem 
+                    { 
+                        Content = original[i], 
+                        OriginalContent = original[i],
+                        IsAdded = false, 
+                        IsRemoved = true, 
+                        IsModified = false 
+                    });
+                    result.Add(new DiffItem 
+                    { 
+                        Content = modified[j], 
+                        OriginalContent = original[i],
+                        IsAdded = true, 
+                        IsRemoved = false, 
+                        IsModified = true 
+                    });
+                    i++; j++;
+                }
+                else if (i < original.Length)
+                {
+                    result.Add(new DiffItem { Content = original[i], IsAdded = false, IsRemoved = true, IsModified = false });
+                    i++;
+                }
+                else if (j < modified.Length)
+                {
+                    result.Add(new DiffItem { Content = modified[j], IsAdded = true, IsRemoved = false, IsModified = false });
+                    j++;
+                }
+            }
+        }
+        
+        return result;
+    }
+
+    /// <summary>
+    /// Longest Common Subsequence（最長共通部分列）を計算
+    /// </summary>
+    private string[] ComputeLCS(string[] original, string[] modified)
+    {
+        int m = original.Length;
+        int n = modified.Length;
+        int[,] dp = new int[m + 1, n + 1];
+        
+        for (int i = 1; i <= m; i++)
+        {
+            for (int j = 1; j <= n; j++)
+            {
+                if (original[i - 1] == modified[j - 1])
+                    dp[i, j] = dp[i - 1, j - 1] + 1;
+                else
+                    dp[i, j] = Math.Max(dp[i - 1, j], dp[i, j - 1]);
+            }
+        }
+        
+        // LCS を逆順で構築
+        var lcs = new List<string>();
+        int x = m, y = n;
+        
+        while (x > 0 && y > 0)
+        {
+            if (original[x - 1] == modified[y - 1])
+            {
+                lcs.Insert(0, original[x - 1]);
+                x--;
+                y--;
+            }
+            else if (dp[x - 1, y] > dp[x, y - 1])
+            {
+                x--;
+            }
+            else
+            {
+                y--;
+            }
+        }
+        
+        return lcs.ToArray();
+    }
+}
 
         var diff = ComputeDiff(originalLines, modifiedLines);
 

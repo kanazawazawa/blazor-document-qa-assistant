@@ -876,16 +876,25 @@ h1:focus {
 .diff-line.added {
     background: #dcfce7;
     color: #15803d;
+    border-left: 3px solid #10b981;
 }
 
 .diff-line.removed {
     background: #fee2e2;
     color: #991b1b;
+    border-left: 3px solid #ef4444;
+}
+
+.diff-line.modified {
+    background: #fef3c7;
+    color: #92400e;
+    border-left: 3px solid #f59e0b;
 }
 
 .diff-line.unchanged {
     background: white;
     color: var(--gray-700);
+    opacity: 0.7;
 }
 
 .diff-marker {
@@ -895,8 +904,35 @@ h1:focus {
     font-weight: 600;
 }
 
+/* ハイライト用スタイル */
+.diff-highlight-added {
+    background: #86efac;
+    color: #065f46;
+    padding: 0.125rem 0.25rem;
+    border-radius: 0.25rem;
+    font-weight: 600;
+}
+
+.diff-highlight-removed {
+    background: #fca5a5;
+    color: #7f1d1d;
+    padding: 0.125rem 0.25rem;
+    border-radius: 0.25rem;
+    font-weight: 600;
+    text-decoration: line-through;
+}
+
 .diff-text.original-text .diff-line.removed {
     background: #fee2e2;
+}
+
+.diff-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--gray-200);
+    background: var(--gray-50);
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
 }
 
 .diff-text.original-text .diff-line.added {
