@@ -49,8 +49,8 @@ body {
 .header-content {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 2rem;
+    justify-content: flex-start;
+    gap: 3rem;
 }
 
 .header-title {
@@ -211,9 +211,9 @@ body {
     box-shadow: var(--shadow-lg);
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 140px);
+    height: calc(100vh - 150px);
     position: sticky;
-    top: 120px;
+    top: 1.5rem;
     transition: all 0.3s ease;
 }
 
@@ -883,7 +883,6 @@ h1:focus {
 .diff-removed {
     background-color: #fecaca;
     color: #7f1d1d;
-    text-decoration: line-through;
     padding: 0.125rem 0.25rem;
     border-radius: 0.25rem;
     font-weight: 500;
