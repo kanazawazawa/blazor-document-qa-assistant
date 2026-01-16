@@ -1,0 +1,170 @@
+@using System.Collections.Generic
+@using System.Linq
+
+<div class="diff-display-container">
+    <div class="diff-header">
+        <h5>
+            <i class="bi bi-arrow-left-right"></i>
+            修正前後の差分
+        </h5>
+    </div>
+
+    <div class="diff-content">
+        @if (!string.IsNullOrWhiteSpace(OriginalText) && !string.IsNullOrWhiteSpace(ModifiedText))
+        {
+            <div class="diff-comparison">
+                <!-- 修正前（左側） -->
+                <div class="diff-column">
+                    <div class="diff-column-header">修正前</div>
+                    <div class="diff-text original-text">
+                        @foreach (var line in GetDiffLines(OriginalText, ModifiedText, isOriginal: true))
+                        {
+                            <div class="diff-line @line.Class">
+                                @if (line.IsRemoved)
+                                {
+                                    <span class="diff-marker">- </span>
+                                }
+                                else if (line.IsAdded)
+                                {
+                                    <span class="diff-marker" style="visibility: hidden;">- </span>
+                                }
+                                else
+                                {
+                                    <span class="diff-marker">  </span>
+                                }
+                                @line.Content
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- 修正後（右側） -->
+                <div class="diff-column">
+                    <div class="diff-column-header">修正後</div>
+                    <div class="diff-text modified-text">
+                        @foreach (var line in GetDiffLines(OriginalText, ModifiedText, isOriginal: false))
+                        {
+                            <div class="diff-line @line.Class">
+                                @if (line.IsAdded)
+                                {
+                                    <span class="diff-marker">+ </span>
+                                }
+                                else if (line.IsRemoved)
+                                {
+                                    <span class="diff-marker" style="visibility: hidden;">+ </span>
+                                }
+                                else
+                                {
+                                    <span class="diff-marker">  </span>
+                                }
+                                @line.Content
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle"></i>
+                修正前後のテキストを入力してください。
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public string OriginalText { get; set; } = string.Empty;
+
+    [Parameter]
+    public string ModifiedText { get; set; } = string.Empty;
+
+    private class DiffLine
+    {
+        public string Content { get; set; } = string.Empty;
+        public bool IsAdded { get; set; }
+        public bool IsRemoved { get; set; }
+        public string Class => IsAdded ? "added" : (IsRemoved ? "removed" : "unchanged");
+    }
+
+    private List<DiffLine> GetDiffLines(string original, string modified, bool isOriginal)
+    {
+        var originalLines = original.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
+        var modifiedLines = modified.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
+
+        var diff = ComputeDiff(originalLines, modifiedLines);
+
+        var result = new List<DiffLine>();
+
+        if (isOriginal)
+        {
+            foreach (var line in diff)
+            {
+                if (line.IsAdded) continue; // 修正前では追加行を表示しない
+                result.Add(new DiffLine
+                {
+                    Content = line.Content,
+                    IsRemoved = line.IsRemoved,
+                    IsAdded = false
+                });
+            }
+        }
+        else
+        {
+            foreach (var line in diff)
+            {
+                if (line.IsRemoved) continue; // 修正後では削除行を表示しない
+                result.Add(new DiffLine
+                {
+                    Content = line.Content,
+                    IsAdded = line.IsAdded,
+                    IsRemoved = false
+                });
+            }
+        }
+
+        return result;
+    }
+
+    private List<DiffLine> ComputeDiff(string[] originalLines, string[] modifiedLines)
+    {
+        var result = new List<DiffLine>();
+
+        // 簡単な行ベースの差分計算（Longest Common Subsequence アルゴリズムの簡易版）
+        var i = 0;
+        var j = 0;
+
+        while (i < originalLines.Length || j < modifiedLines.Length)
+        {
+            if (i < originalLines.Length && j < modifiedLines.Length && originalLines[i] == modifiedLines[j])
+            {
+                // 同じ行
+                result.Add(new DiffLine { Content = originalLines[i], IsAdded = false, IsRemoved = false });
+                i++;
+                j++;
+            }
+            else if (i < originalLines.Length && (j >= modifiedLines.Length || !modifiedLines.Contains(originalLines[i])))
+            {
+                // 削除行
+                result.Add(new DiffLine { Content = originalLines[i], IsAdded = false, IsRemoved = true });
+                i++;
+            }
+            else if (j < modifiedLines.Length && (i >= originalLines.Length || !originalLines.Contains(modifiedLines[j])))
+            {
+                // 追加行
+                result.Add(new DiffLine { Content = modifiedLines[j], IsAdded = true, IsRemoved = false });
+                j++;
+            }
+            else
+            {
+                // 両方にある場合は次へ
+                i++;
+                j++;
+            }
+        }
+
+        return result;
+    }
+}

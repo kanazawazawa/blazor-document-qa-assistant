@@ -11,6 +11,7 @@ public interface IAgentService
 {
     Task<string> GenerateResponseAsync(string questionText, CancellationToken cancellationToken = default);
     Task<string> ReviewResponseAsync(string responseText, CancellationToken cancellationToken = default);
+    Task<string> RewriteResponseAsync(string responseText, CancellationToken cancellationToken = default);
     Task<string> ChatAsync(string userMessage, string context, CancellationToken cancellationToken = default);
 }
 
@@ -34,50 +35,50 @@ public class AgentService : IAgentService
 
         if (string.IsNullOrWhiteSpace(endpoint))
         {
-            _logger.LogError("Foundry Agent ƒGƒ“ƒhƒ|ƒCƒ“ƒg‚ªİ’è‚³‚ê‚Ä‚¢‚Ü‚¹‚ñ");
-            return "ƒGƒ‰[: Foundry Agent ƒGƒ“ƒhƒ|ƒCƒ“ƒg‚ªİ’è‚³‚ê‚Ä‚¢‚Ü‚¹‚ñBappsettings.json ‚ğŠm”F‚µ‚Ä‚­‚¾‚³‚¢B";
+            _logger.LogError("Foundry Agent ï¿½Gï¿½ï¿½ï¿½hï¿½|ï¿½Cï¿½ï¿½ï¿½gï¿½ï¿½ï¿½İ’è‚³ï¿½ï¿½Ä‚ï¿½ï¿½Ü‚ï¿½ï¿½ï¿½");
+            return "ï¿½Gï¿½ï¿½ï¿½[: Foundry Agent ï¿½Gï¿½ï¿½ï¿½hï¿½|ï¿½Cï¿½ï¿½ï¿½gï¿½ï¿½ï¿½İ’è‚³ï¿½ï¿½Ä‚ï¿½ï¿½Ü‚ï¿½ï¿½ï¿½Bappsettings.json ï¿½ï¿½ï¿½mï¿½Fï¿½ï¿½ï¿½Ä‚ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½B";
         }
 
         if (string.IsNullOrWhiteSpace(agentName))
         {
-            _logger.LogError("Agent –¼‚ªİ’è‚³‚ê‚Ä‚¢‚Ü‚¹‚ñ");
-            return "ƒGƒ‰[: Agent –¼‚ªİ’è‚³‚ê‚Ä‚¢‚Ü‚¹‚ñBappsettings.json ‚ğŠm”F‚µ‚Ä‚­‚¾‚³‚¢B";
+            _logger.LogError("Agent ï¿½ï¿½ï¿½ï¿½ï¿½İ’è‚³ï¿½ï¿½Ä‚ï¿½ï¿½Ü‚ï¿½ï¿½ï¿½");
+            return "ï¿½Gï¿½ï¿½ï¿½[: Agent ï¿½ï¿½ï¿½ï¿½ï¿½İ’è‚³ï¿½ï¿½Ä‚ï¿½ï¿½Ü‚ï¿½ï¿½ï¿½Bappsettings.json ï¿½ï¿½ï¿½mï¿½Fï¿½ï¿½ï¿½Ä‚ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½B";
         }
 
         try
         {
-            // AIProjectClient ‚ğì¬ (App Service ‚Å‚Íƒ}ƒl[ƒWƒhID‚ğg—p)
+            // AIProjectClient ï¿½ï¿½ï¿½ì¬ (App Service ï¿½Å‚Íƒ}ï¿½lï¿½[ï¿½Wï¿½hIDï¿½ï¿½ï¿½gï¿½p)
             var credential = new DefaultAzureCredential();
             var projectClient = new AIProjectClient(new Uri(endpoint), credential);
 
-            // ‰ï˜b‚ğì¬
+            // ï¿½ï¿½bï¿½ï¿½ï¿½ì¬
             var conversationResult = projectClient.OpenAI.Conversations.CreateProjectConversation();
             var conversation = conversationResult.Value;
             
-            _logger.LogInformation("‰ï˜b‚ğì¬‚µ‚Ü‚µ‚½: {ConversationId}", conversation.Id);
+            _logger.LogInformation("ï¿½ï¿½bï¿½ï¿½ï¿½ì¬ï¿½ï¿½ï¿½Ü‚ï¿½ï¿½ï¿½: {ConversationId}", conversation.Id);
 
-            // ProjectResponsesClient ‚ğæ“¾
+            // ProjectResponsesClient ï¿½ï¿½ï¿½æ“¾
             var responsesClient = projectClient.OpenAI.GetProjectResponsesClientForAgent(
                 defaultAgent: agentName,
                 defaultConversationId: conversation.Id);
 
-            _logger.LogInformation("ƒG[ƒWƒFƒ“ƒg '{AgentName}' ‚ÉƒƒbƒZ[ƒW‚ğ‘—M’†...", agentName);
+            _logger.LogInformation("ï¿½Gï¿½[ï¿½Wï¿½Fï¿½ï¿½ï¿½g '{AgentName}' ï¿½Éƒï¿½ï¿½bï¿½Zï¿½[ï¿½Wï¿½ğ‘—Mï¿½ï¿½...", agentName);
 
-            // ƒG[ƒWƒFƒ“ƒg‚ÉƒƒbƒZ[ƒW‚ğ‘—M
+            // ï¿½Gï¿½[ï¿½Wï¿½Fï¿½ï¿½ï¿½gï¿½Éƒï¿½ï¿½bï¿½Zï¿½[ï¿½Wï¿½ğ‘—M
             var responseResult = await Task.Run(() => responsesClient.CreateResponse(questionText), cancellationToken);
             var response = responseResult.Value;
 
-            // ‰“šƒeƒLƒXƒg‚ğæ“¾
+            // ï¿½ï¿½ï¿½ï¿½ï¿½eï¿½Lï¿½Xï¿½gï¿½ï¿½ï¿½æ“¾
             var responseText = response.GetOutputText();
 
-            _logger.LogInformation("ƒG[ƒWƒFƒ“ƒg‚©‚ç‰“š‚ğóM‚µ‚Ü‚µ‚½");
+            _logger.LogInformation("ï¿½Gï¿½[ï¿½Wï¿½Fï¿½ï¿½ï¿½gï¿½ï¿½ï¿½ç‰ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Mï¿½ï¿½ï¿½Ü‚ï¿½ï¿½ï¿½");
 
             return responseText;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "AIƒG[ƒWƒFƒ“ƒgÀs’†‚ÉƒGƒ‰[‚ª”­¶‚µ‚Ü‚µ‚½");
-            return $"ƒGƒ‰[: {ex.Message}\n\nİ’è‚ğŠm”F‚µ‚Ä‚­‚¾‚³‚¢:\n- ƒGƒ“ƒhƒ|ƒCƒ“ƒg: {endpoint}\n- ƒG[ƒWƒFƒ“ƒg–¼: {agentName}";
+            _logger.LogError(ex, "AIï¿½Gï¿½[ï¿½Wï¿½Fï¿½ï¿½ï¿½gï¿½ï¿½ï¿½sï¿½ï¿½ï¿½ÉƒGï¿½ï¿½ï¿½[ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ü‚ï¿½ï¿½ï¿½");
+            return $"ï¿½Gï¿½ï¿½ï¿½[: {ex.Message}\n\nï¿½İ’ï¿½ï¿½ï¿½mï¿½Fï¿½ï¿½ï¿½Ä‚ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½:\n- ï¿½Gï¿½ï¿½ï¿½hï¿½|ï¿½Cï¿½ï¿½ï¿½g: {endpoint}\n- ï¿½Gï¿½[ï¿½Wï¿½Fï¿½ï¿½ï¿½gï¿½ï¿½: {agentName}";
         }
     }
 
@@ -90,53 +91,111 @@ public class AgentService : IAgentService
 
         if (string.IsNullOrWhiteSpace(endpoint))
         {
-            _logger.LogError("Foundry Agent ƒGƒ“ƒhƒ|ƒCƒ“ƒg‚ªİ’è‚³‚ê‚Ä‚¢‚Ü‚¹‚ñ");
-            return "ƒGƒ‰[: Foundry Agent ƒGƒ“ƒhƒ|ƒCƒ“ƒg‚ªİ’è‚³‚ê‚Ä‚¢‚Ü‚¹‚ñBappsettings.json ‚ğŠm”F‚µ‚Ä‚­‚¾‚³‚¢B";
+            _logger.LogError("Foundry Agent ï¿½Gï¿½ï¿½ï¿½hï¿½|ï¿½Cï¿½ï¿½ï¿½gï¿½ï¿½ï¿½İ’è‚³ï¿½ï¿½Ä‚ï¿½ï¿½Ü‚ï¿½ï¿½ï¿½");
+            return "ï¿½Gï¿½ï¿½ï¿½[: Foundry Agent ï¿½Gï¿½ï¿½ï¿½hï¿½|ï¿½Cï¿½ï¿½ï¿½gï¿½ï¿½ï¿½İ’è‚³ï¿½ï¿½Ä‚ï¿½ï¿½Ü‚ï¿½ï¿½ï¿½Bappsettings.json ï¿½ï¿½ï¿½mï¿½Fï¿½ï¿½ï¿½Ä‚ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½B";
         }
 
         if (string.IsNullOrWhiteSpace(reviewAgentName))
         {
-            _logger.LogError("Review Agent –¼‚ªİ’è‚³‚ê‚Ä‚¢‚Ü‚¹‚ñ");
-            return "ƒGƒ‰[: Review Agent –¼‚ªİ’è‚³‚ê‚Ä‚¢‚Ü‚¹‚ñBappsettings.json ‚Ì ReviewAgentId ‚ğŠm”F‚µ‚Ä‚­‚¾‚³‚¢B";
+            _logger.LogError("Review Agent ï¿½ï¿½ï¿½ï¿½ï¿½İ’è‚³ï¿½ï¿½Ä‚ï¿½ï¿½Ü‚ï¿½ï¿½ï¿½");
+            return "ï¿½Gï¿½ï¿½ï¿½[: Review Agent ï¿½ï¿½ï¿½ï¿½ï¿½İ’è‚³ï¿½ï¿½Ä‚ï¿½ï¿½Ü‚ï¿½ï¿½ï¿½Bappsettings.json ï¿½ï¿½ ReviewAgentId ï¿½ï¿½ï¿½mï¿½Fï¿½ï¿½ï¿½Ä‚ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½B";
         }
 
         try
         {
-            // AIProjectClient ‚ğì¬ (App Service ‚Å‚Íƒ}ƒl[ƒWƒhID‚ğg—p)
+            // AIProjectClient ï¿½ï¿½ï¿½ì¬ (App Service ï¿½Å‚Íƒ}ï¿½lï¿½[ï¿½Wï¿½hIDï¿½ï¿½ï¿½gï¿½p)
             var credential = new DefaultAzureCredential();
             var projectClient = new AIProjectClient(new Uri(endpoint), credential);
 
-            // ‰ï˜b‚ğì¬
+            // ï¿½ï¿½bï¿½ï¿½ï¿½ì¬
             var conversationResult = projectClient.OpenAI.Conversations.CreateProjectConversation();
             var conversation = conversationResult.Value;
             
-            _logger.LogInformation("ƒŒƒrƒ…[—p‰ï˜b‚ğì¬‚µ‚Ü‚µ‚½: {ConversationId}", conversation.Id);
+            _logger.LogInformation("ï¿½ï¿½ï¿½rï¿½ï¿½ï¿½[ï¿½pï¿½ï¿½bï¿½ï¿½ï¿½ì¬ï¿½ï¿½ï¿½Ü‚ï¿½ï¿½ï¿½: {ConversationId}", conversation.Id);
 
-            // ProjectResponsesClient ‚ğæ“¾iƒŒƒrƒ…[ƒG[ƒWƒFƒ“ƒg—pj
+            // ProjectResponsesClient ï¿½ï¿½ï¿½æ“¾ï¿½iï¿½ï¿½ï¿½rï¿½ï¿½ï¿½[ï¿½Gï¿½[ï¿½Wï¿½Fï¿½ï¿½ï¿½gï¿½pï¿½j
             var responsesClient = projectClient.OpenAI.GetProjectResponsesClientForAgent(
                 defaultAgent: reviewAgentName,
                 defaultConversationId: conversation.Id);
 
-            _logger.LogInformation("ƒŒƒrƒ…[ƒG[ƒWƒFƒ“ƒg '{ReviewAgentName}' ‚ÉƒƒbƒZ[ƒW‚ğ‘—M’†...", reviewAgentName);
+            _logger.LogInformation("ï¿½ï¿½ï¿½rï¿½ï¿½ï¿½[ï¿½Gï¿½[ï¿½Wï¿½Fï¿½ï¿½ï¿½g '{ReviewAgentName}' ï¿½Éƒï¿½ï¿½bï¿½Zï¿½[ï¿½Wï¿½ğ‘—Mï¿½ï¿½...", reviewAgentName);
 
-            // ƒŒƒrƒ…[ˆË—ŠƒƒbƒZ[ƒW‚ğì¬
-            var reviewRequest = $"ˆÈ‰º‚Ì“š•ÙˆÄ‚ğƒŒƒrƒ…[‚µ‚Ä‚­‚¾‚³‚¢:\n\n{responseText}";
+            // ï¿½ï¿½ï¿½rï¿½ï¿½ï¿½[ï¿½Ë—ï¿½ï¿½ï¿½ï¿½bï¿½Zï¿½[ï¿½Wï¿½ï¿½ï¿½ì¬
+            var reviewRequest = $"ï¿½È‰ï¿½ï¿½Ì“ï¿½ï¿½ÙˆÄ‚ï¿½ï¿½ï¿½ï¿½rï¿½ï¿½ï¿½[ï¿½ï¿½ï¿½Ä‚ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½:\n\n{responseText}";
 
-            // ƒG[ƒWƒFƒ“ƒg‚ÉƒƒbƒZ[ƒW‚ğ‘—M
+            // ï¿½Gï¿½[ï¿½Wï¿½Fï¿½ï¿½ï¿½gï¿½Éƒï¿½ï¿½bï¿½Zï¿½[ï¿½Wï¿½ğ‘—M
             var responseResult = await Task.Run(() => responsesClient.CreateResponse(reviewRequest), cancellationToken);
             var response = responseResult.Value;
 
-            // ‰“šƒeƒLƒXƒg‚ğæ“¾
+            // ï¿½ï¿½ï¿½ï¿½ï¿½eï¿½Lï¿½Xï¿½gï¿½ï¿½ï¿½æ“¾
             var reviewText = response.GetOutputText();
 
-            _logger.LogInformation("ƒŒƒrƒ…[ƒG[ƒWƒFƒ“ƒg‚©‚ç‰“š‚ğóM‚µ‚Ü‚µ‚½");
+            _logger.LogInformation("ï¿½ï¿½ï¿½rï¿½ï¿½ï¿½[ï¿½Gï¿½[ï¿½Wï¿½Fï¿½ï¿½ï¿½gï¿½ï¿½ï¿½ç‰ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Mï¿½ï¿½ï¿½Ü‚ï¿½ï¿½ï¿½");
 
             return reviewText;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "ƒŒƒrƒ…[ƒG[ƒWƒFƒ“ƒgÀs’†‚ÉƒGƒ‰[‚ª”­¶‚µ‚Ü‚µ‚½");
-            return $"ƒGƒ‰[: {ex.Message}\n\nİ’è‚ğŠm”F‚µ‚Ä‚­‚¾‚³‚¢:\n- ƒGƒ“ƒhƒ|ƒCƒ“ƒg: {endpoint}\n- ƒŒƒrƒ…[ƒG[ƒWƒFƒ“ƒg–¼: {reviewAgentName}";
+            _logger.LogError(ex, "ï¿½ï¿½ï¿½rï¿½ï¿½ï¿½[ï¿½Gï¿½[ï¿½Wï¿½Fï¿½ï¿½ï¿½gï¿½ï¿½ï¿½sï¿½ï¿½ï¿½ÉƒGï¿½ï¿½ï¿½[ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ü‚ï¿½ï¿½ï¿½");
+            return $"ï¿½Gï¿½ï¿½ï¿½[: {ex.Message}\n\nï¿½İ’ï¿½ï¿½ï¿½mï¿½Fï¿½ï¿½ï¿½Ä‚ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½:\n- ï¿½Gï¿½ï¿½ï¿½hï¿½|ï¿½Cï¿½ï¿½ï¿½g: {endpoint}\n- ï¿½ï¿½ï¿½rï¿½ï¿½ï¿½[ï¿½Gï¿½[ï¿½Wï¿½Fï¿½ï¿½ï¿½gï¿½ï¿½: {reviewAgentName}";
+        }
+    }
+
+    public async Task<string> RewriteResponseAsync(
+        string responseText,
+        CancellationToken cancellationToken = default)
+    {
+        var endpoint = _configuration["FoundryAgent:Endpoint"];
+        var rewriteAgentName = _configuration["FoundryAgent:RewriteAgentId"] ?? "Answer-Rewrite";
+
+        if (string.IsNullOrWhiteSpace(endpoint))
+        {
+            _logger.LogError("Foundry Agent ã‚¨ãƒ³ãƒ‰ãƒã‚¤ãƒ³ãƒˆãŒè¨­å®šã•ã‚Œã¦ã„ã¾ã›ã‚“");
+            return $"ã‚¨ãƒ©ãƒ¼: Foundry Agent ã‚¨ãƒ³ãƒ‰ãƒã‚¤ãƒ³ãƒˆãŒè¨­å®šã•ã‚Œã¦ã„ã¾ã›ã‚“ã€‚appsettings.json ã‚’ç¢ºèªã—ã¦ãã ã•ã„ã€‚";
+        }
+
+        if (string.IsNullOrWhiteSpace(rewriteAgentName))
+        {
+            _logger.LogError("Rewrite Agent åãŒè¨­å®šã•ã‚Œã¦ã„ã¾ã›ã‚“");
+            return $"ã‚¨ãƒ©ãƒ¼: Rewrite Agent åãŒè¨­å®šã•ã‚Œã¦ã„ã¾ã›ã‚“ã€‚appsettings.json ã‚’ç¢ºèªã—ã¦ãã ã•ã„ã€‚";
+        }
+
+        try
+        {
+            var credential = new DefaultAzureCredential();
+            var projectClient = new AIProjectClient(new Uri(endpoint), credential);
+
+            // ä¼šè©±ã‚’ä½œæˆ
+            var conversationResult = projectClient.OpenAI.Conversations.CreateProjectConversation();
+            var conversation = conversationResult.Value;
+            
+            _logger.LogInformation("ä¿®æ­£ç”¨ã®ä¼šè©±ã‚’ä½œæˆã—ã¾ã—ãŸ: {ConversationId}", conversation.Id);
+
+            // ProjectResponsesClient ã‚’å–å¾—ï¼ˆä¿®æ­£ã‚¨ãƒ¼ã‚¸ã‚§ãƒ³ãƒˆç”¨ï¼‰
+            var responsesClient = projectClient.OpenAI.GetProjectResponsesClientForAgent(
+                defaultAgent: rewriteAgentName,
+                defaultConversationId: conversation.Id);
+
+            _logger.LogInformation("ä¿®æ­£ã‚¨ãƒ¼ã‚¸ã‚§ãƒ³ãƒˆ '{RewriteAgentName}' ã«ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã‚’é€ä¿¡ä¸­...", rewriteAgentName);
+
+            // ä¿®æ­£ãƒªã‚¯ã‚¨ã‚¹ãƒˆãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã‚’ä½œæˆ
+            var rewriteRequest = $"ä»¥ä¸‹ã®AIç”Ÿæˆãƒ†ã‚­ã‚¹ãƒˆã‚’æ”¹å–„ãƒ»ä¿®æ­£ã—ã¦ãã ã•ã„ã€‚ä¿®æ­£å†…å®¹ã¯å…ƒã®ãƒ†ã‚­ã‚¹ãƒˆã¨ã®å·®åˆ†ã‚’å«ã‚ã¦æç¤ºã—ã¦ãã ã•ã„:\n\n{responseText}";
+
+            // ã‚¨ãƒ¼ã‚¸ã‚§ãƒ³ãƒˆã«ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã‚’é€ä¿¡
+            var responseResult = await Task.Run(() => responsesClient.CreateResponse(rewriteRequest), cancellationToken);
+            var response = responseResult.Value;
+
+            // ä¿®æ­£ã•ã‚ŒãŸãƒ†ã‚­ã‚¹ãƒˆã‚’å–å¾—
+            var rewrittenText = response.GetOutputText();
+
+            _logger.LogInformation("ä¿®æ­£ã‚¨ãƒ¼ã‚¸ã‚§ãƒ³ãƒˆã‹ã‚‰å¿œç­”ã‚’å—ã‘å–ã‚Šã¾ã—ãŸ");
+
+            return rewrittenText;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "ä¿®æ­£ã‚¨ãƒ¼ã‚¸ã‚§ãƒ³ãƒˆå‡¦ç†ä¸­ã«ã‚¨ãƒ©ãƒ¼ãŒç™ºç”Ÿã—ã¾ã—ãŸ");
+            return $"ã‚¨ãƒ©ãƒ¼: {ex.Message}\n\nè¨­å®šã‚’ç¢ºèªã—ã¦ãã ã•ã„:\n- ã‚¨ãƒ³ãƒ‰ãƒã‚¤ãƒ³ãƒˆ: {endpoint}\n- ä¿®æ­£ã‚¨ãƒ¼ã‚¸ã‚§ãƒ³ãƒˆå: {rewriteAgentName}";
         }
     }
 
@@ -150,14 +209,14 @@ public class AgentService : IAgentService
 
         if (string.IsNullOrWhiteSpace(endpoint))
         {
-            _logger.LogError("Foundry Agent ƒGƒ“ƒhƒ|ƒCƒ“ƒg‚ªİ’è‚³‚ê‚Ä‚¢‚Ü‚¹‚ñ");
-            return "ƒGƒ‰[: Foundry Agent ƒGƒ“ƒhƒ|ƒCƒ“ƒg‚ªİ’è‚³‚ê‚Ä‚¢‚Ü‚¹‚ñB";
+            _logger.LogError("Foundry Agent ï¿½Gï¿½ï¿½ï¿½hï¿½|ï¿½Cï¿½ï¿½ï¿½gï¿½ï¿½ï¿½İ’è‚³ï¿½ï¿½Ä‚ï¿½ï¿½Ü‚ï¿½ï¿½ï¿½");
+            return "ï¿½Gï¿½ï¿½ï¿½[: Foundry Agent ï¿½Gï¿½ï¿½ï¿½hï¿½|ï¿½Cï¿½ï¿½ï¿½gï¿½ï¿½ï¿½İ’è‚³ï¿½ï¿½Ä‚ï¿½ï¿½Ü‚ï¿½ï¿½ï¿½B";
         }
 
         if (string.IsNullOrWhiteSpace(chatAgentName))
         {
-            _logger.LogError("Chat Agent –¼‚ªİ’è‚³‚ê‚Ä‚¢‚Ü‚¹‚ñ");
-            return "ƒGƒ‰[: Chat Agent –¼‚ªİ’è‚³‚ê‚Ä‚¢‚Ü‚¹‚ñBappsettings.json ‚Ì ChatAgentId ‚ğŠm”F‚µ‚Ä‚­‚¾‚³‚¢B";
+            _logger.LogError("Chat Agent ï¿½ï¿½ï¿½ï¿½ï¿½İ’è‚³ï¿½ï¿½Ä‚ï¿½ï¿½Ü‚ï¿½ï¿½ï¿½");
+            return "ï¿½Gï¿½ï¿½ï¿½[: Chat Agent ï¿½ï¿½ï¿½ï¿½ï¿½İ’è‚³ï¿½ï¿½Ä‚ï¿½ï¿½Ü‚ï¿½ï¿½ï¿½Bappsettings.json ï¿½ï¿½ ChatAgentId ï¿½ï¿½ï¿½mï¿½Fï¿½ï¿½ï¿½Ä‚ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½B";
         }
 
         try
@@ -168,32 +227,32 @@ public class AgentService : IAgentService
             var conversationResult = projectClient.OpenAI.Conversations.CreateProjectConversation();
             var conversation = conversationResult.Value;
             
-            _logger.LogInformation("ƒ`ƒƒƒbƒg—p‰ï˜b‚ğì¬‚µ‚Ü‚µ‚½: {ConversationId}", conversation.Id);
+            _logger.LogInformation("ï¿½`ï¿½ï¿½ï¿½bï¿½gï¿½pï¿½ï¿½bï¿½ï¿½ï¿½ì¬ï¿½ï¿½ï¿½Ü‚ï¿½ï¿½ï¿½: {ConversationId}", conversation.Id);
 
             var responsesClient = projectClient.OpenAI.GetProjectResponsesClientForAgent(
                 defaultAgent: chatAgentName,
                 defaultConversationId: conversation.Id);
 
-            _logger.LogInformation("ƒ`ƒƒƒbƒgƒG[ƒWƒFƒ“ƒg '{ChatAgentName}' ‚ÉƒƒbƒZ[ƒW‚ğ‘—M’†...", chatAgentName);
+            _logger.LogInformation("ï¿½`ï¿½ï¿½ï¿½bï¿½gï¿½Gï¿½[ï¿½Wï¿½Fï¿½ï¿½ï¿½g '{ChatAgentName}' ï¿½Éƒï¿½ï¿½bï¿½Zï¿½[ï¿½Wï¿½ğ‘—Mï¿½ï¿½...", chatAgentName);
 
-            // ƒRƒ“ƒeƒLƒXƒg‚ğŠÜ‚ß‚½ƒƒbƒZ[ƒW‚ğì¬
+            // ï¿½Rï¿½ï¿½ï¿½eï¿½Lï¿½Xï¿½gï¿½ï¿½ï¿½Ü‚ß‚ï¿½ï¿½ï¿½ï¿½bï¿½Zï¿½[ï¿½Wï¿½ï¿½ï¿½ì¬
             var messageWithContext = string.IsNullOrWhiteSpace(context)
                 ? userMessage
-                : $"y‰æ–Êã‚Ìî•ñz\n{context}\n\nyƒ†[ƒU[‚Ì¿–âz\n{userMessage}";
+                : $"ï¿½yï¿½ï¿½Êï¿½Ìï¿½ï¿½z\n{context}\n\nï¿½yï¿½ï¿½ï¿½[ï¿½Uï¿½[ï¿½Ìï¿½ï¿½ï¿½z\n{userMessage}";
 
             var responseResult = await Task.Run(() => responsesClient.CreateResponse(messageWithContext), cancellationToken);
             var response = responseResult.Value;
 
             var chatResponse = response.GetOutputText();
 
-            _logger.LogInformation("ƒ`ƒƒƒbƒgƒG[ƒWƒFƒ“ƒg‚©‚ç‰“š‚ğóM‚µ‚Ü‚µ‚½");
+            _logger.LogInformation("ï¿½`ï¿½ï¿½ï¿½bï¿½gï¿½Gï¿½[ï¿½Wï¿½Fï¿½ï¿½ï¿½gï¿½ï¿½ï¿½ç‰ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Mï¿½ï¿½ï¿½Ü‚ï¿½ï¿½ï¿½");
 
             return chatResponse;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "ƒ`ƒƒƒbƒgƒG[ƒWƒFƒ“ƒgÀs’†‚ÉƒGƒ‰[‚ª”­¶‚µ‚Ü‚µ‚½");
-            return $"ƒGƒ‰[: {ex.Message}";
+            _logger.LogError(ex, "ï¿½`ï¿½ï¿½ï¿½bï¿½gï¿½Gï¿½[ï¿½Wï¿½Fï¿½ï¿½ï¿½gï¿½ï¿½ï¿½sï¿½ï¿½ï¿½ÉƒGï¿½ï¿½ï¿½[ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ü‚ï¿½ï¿½ï¿½");
+            return $"ï¿½Gï¿½ï¿½ï¿½[: {ex.Message}";
         }
     }
 }
