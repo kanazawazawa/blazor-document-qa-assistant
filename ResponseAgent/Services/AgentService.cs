@@ -179,7 +179,8 @@ public class AgentService : IAgentService
             _logger.LogInformation("修正エージェント '{RewriteAgentName}' にメッセージを送信中...", rewriteAgentName);
 
             // 修正リクエストメッセージを作成
-            var rewriteRequest = $"以下の AI 生成テキストを改善・修正してください。修正内容は元のテキストとの差分を含めて提示してください:\n\n{responseText}";
+            // var rewriteRequest = $"以下の AI 生成テキストを改善・修正してください。修正内容は元のテキストとの差分を含めて提示してください:\n\n{responseText}";
+            var rewriteRequest = $"以下の AI 生成テキストを改善・修正してください。:\n\n{responseText}";
 
             // エージェントにメッセージを送信
             var responseResult = await Task.Run(() => responsesClient.CreateResponse(rewriteRequest), cancellationToken);
