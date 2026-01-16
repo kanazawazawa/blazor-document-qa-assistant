@@ -951,6 +951,42 @@ h1:focus {
     background-color: var(--warning-color) !important;
 }
 
+/* === 差分表示セクション（全幅） === */
+
+.diff-section-full-width {
+    width: 100%;
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.diff-section-full-width .custom-card {
+    border: 2px solid #10b981;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+}
+
+.diff-section-full-width .card-header-custom {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.diff-section-full-width .btn-icon-copy {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.diff-section-full-width .btn-icon-copy:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
 /* === 音声チャット スタイル === */
 
 .voice-chat-container {
