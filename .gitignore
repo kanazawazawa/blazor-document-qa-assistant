@@ -112,6 +112,11 @@ bld/
 *.nuget.props
 *.nuget.targets
 
+# Azure Publish Profiles (機密情報を含む)
+**/Properties/PublishProfiles/
+*.pubxml
+*.pubxml.user
+
 # ?? SECURITY: 機密情報を含む設定ファイル
 appsettings.json
 appsettings.*.json
