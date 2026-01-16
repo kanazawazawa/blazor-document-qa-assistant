@@ -21,9 +21,6 @@ public class VoiceChatService : IVoiceChatService
     private readonly IConfiguration _configuration;
     private readonly ILogger<VoiceChatService> _logger;
     private VoiceLiveClient? _voiceLiveClient;
-    private readonly string _model = "gpt-4o";
-    private readonly string _voice = "ja-JP-NanaNeural";
-    private readonly string _systemInstructions = "You are a helpful AI assistant. Respond naturally and conversationally in Japanese. Keep your responses concise but engaging.";
 
     public bool IsInitialized => _voiceLiveClient != null;
 
@@ -123,10 +120,10 @@ public class VoiceChatService : IVoiceChatService
         {
             if (_voiceLiveClient != null)
             {
-                _voiceLiveClient.Dispose();
                 _voiceLiveClient = null;
                 _logger.LogInformation("VoiceLive 接続を切断しました");
             }
+            await Task.CompletedTask;
         }
         catch (Exception ex)
         {

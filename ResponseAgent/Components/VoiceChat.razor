@@ -30,10 +30,10 @@
             <!-- 音声入力セクション -->
             <div class="voice-input-section mb-3">
                 <div class="voice-button-group">
-                    <button class="btn btn-lg btn-primary voice-record-btn @(isRecording ? 'recording' : '')"
+                    <button class="btn btn-lg btn-primary voice-record-btn @(isRecording ? "recording" : "")" 
                             @onclick="@(isRecording ? StopRecordingAsync : StartRecordingAsync)"
-                            disabled="@!isConnected">
-                        <i class="bi @(isRecording ? 'bi-stop-circle-fill' : 'bi-record-circle-fill')"></i>
+                            disabled="@(!isConnected)">
+                        <i class="bi @(isRecording ? "bi-stop-circle-fill" : "bi-record-circle-fill")"></i>
                         @(isRecording ? "停止" : "録音")
                     </button>
                     
@@ -42,8 +42,7 @@
                         接続
                     </button>
                     
-                    <button class="btn btn-secondary" @onclick="DisconnectAsync" disabled="@!isConnected">
-                        <i class="bi bi-telephone-minus"></i>
+                    <button class="btn btn-secondary" @onclick="DisconnectAsync" disabled="@(!isConnected)">
                         切断
                     </button>
                 </div>
