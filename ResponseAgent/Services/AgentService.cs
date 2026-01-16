@@ -179,8 +179,17 @@ public class AgentService : IAgentService
             _logger.LogInformation("修正エージェント '{RewriteAgentName}' にメッセージを送信中...", rewriteAgentName);
 
             // 修正リクエストメッセージを作成
-            // var rewriteRequest = $"以下の AI 生成テキストを改善・修正してください。修正内容は元のテキストとの差分を含めて提示してください:\n\n{responseText}";
-            var rewriteRequest = $"以下の AI 生成テキストを改善・修正してください。:\n\n{responseText}";
+            var rewriteRequest = @$"以下のテキストを改善・修正してください。
+
+【重要な指示】
+- 修正後のテキストのみを出力してください
+- JSON形式やメタデータは含めないでください
+- 元のテキストの構造（質問内容、答弁本文など）を維持してください
+- 改善点があれば自然な日本語に修正してください
+- 余計な説明や前置きは不要です
+
+【修正対象のテキスト】
+{responseText}";
 
             // エージェントにメッセージを送信
             var responseResult = await Task.Run(() => responsesClient.CreateResponse(rewriteRequest), cancellationToken);
